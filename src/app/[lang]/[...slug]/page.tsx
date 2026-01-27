@@ -4,13 +4,17 @@ import { generateSpintaxDescription } from '@/lib/spintax';
 import SchemaMarkup from '@/components/SchemaMarkup';
 import Dashboard from '@/components/Dashboard';
 import HeroImage from '@/components/HeroImage';
+import { getDictionary } from '@/lib/dictionaries';
 
 // WikiSection component removed as it is now integrated into QuickFactsCard
 
 export default async function Page({ params }: { params: { lang: string; slug: string[] } }) {
   const slugStr = params.slug.join('/');
 
-  const place = await getPlaceBySlug(slugStr);
+  const [place, dict] = await Promise.all([
+    getPlaceBySlug(slugStr),
+    getDictionary(params.lang)
+  ]);
 
   const displayName = place?.name || slugStr.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   const description = place ? generateSpintaxDescription({
@@ -42,7 +46,7 @@ export default async function Page({ params }: { params: { lang: string; slug: s
 
       <div className="mx-auto max-w-7xl px-6 -mt-8 relative z-10">
         {place ? (
-          <Dashboard initialPlace={place} />
+          <Dashboard initialPlace={place} dict={dict} />
         ) : (
           <div className="p-10 text-center bg-white rounded-3xl">Place not found.</div>
         )}
