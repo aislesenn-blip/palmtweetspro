@@ -1,8 +1,4 @@
 import Link from 'next/link';
-import { Search } from 'lucide-react';
-
-// Reusing client search logic would require a Client Component for the input.
-// Let's create a local Client Component for the Hero Search to be interactive.
 import HeroSearch from './HeroSearch';
 
 export default function Page({ params: { lang } }: { params: { lang: string } }) {
@@ -24,7 +20,7 @@ export default function Page({ params: { lang } }: { params: { lang: string } })
         </h1>
 
         <p className="mb-10 text-xl text-gray-500 max-w-2xl">
-          Instant access to Postal Codes, Calling Codes, Weather, Currency, and Local Insights for 11 Million+ Locations worldwide.
+          Instant access to Postal Codes, Weather, Time, Currency, and Telecom Data for 11 Million+ Locations.
         </p>
 
         <p className="mb-8 text-lg font-medium text-gray-400">

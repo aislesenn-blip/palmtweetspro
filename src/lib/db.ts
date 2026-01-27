@@ -1,8 +1,9 @@
 import { createClient } from '@libsql/client';
 import axios from 'axios';
 
-const url = process.env.TURSO_URL || 'file:local.db';
-const authToken = process.env.TURSO_TOKEN;
+// Prioritize NEXT_PUBLIC_ vars if available (for Vercel), fallback to standard vars, then local file.
+const url = process.env.NEXT_PUBLIC_TURSO_URL || process.env.TURSO_URL || 'file:local.db';
+const authToken = process.env.NEXT_PUBLIC_TURSO_AUTH_TOKEN || process.env.TURSO_TOKEN;
 
 export const db = createClient({
   url,
