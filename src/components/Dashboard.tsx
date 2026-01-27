@@ -26,6 +26,7 @@ export default function Dashboard({ initialPlace }: DashboardProps) {
     telecom: null,
     currency: null,
     nearby: null,
+    rates: null
   });
   const [loading, setLoading] = useState(true);
 
@@ -45,10 +46,12 @@ export default function Dashboard({ initialPlace }: DashboardProps) {
         axios.get(`https://api.open-meteo.com/v1/forecast`, {
           params: { latitude: lat, longitude: lng, current: 'temperature_2m,weather_code', timezone: 'auto' }
         }),
-        // Identity, Telecom, Currency
-        axios.get(`https://restcountries.com/v3.1/name/${country}?fields=currencies,idd,region,subregion,languages,flags`),
+        // Identity, Telecom, Currency Metadata
+        axios.get(`https://restcountries.com/v3.1/name/${country}?fields=currencies,idd,region,subregion,flags,languages`),
         // Nearby (Internal API)
-        axios.get(`/api/places/nearby?lat=${lat}&lng=${lng}`)
+        axios.get(`/api/places/nearby?lat=${lat}&lng=${lng}`),
+        // Live Rates
+        axios.get(`https://open.er-api.com/v6/latest/USD`)
       ]);
 
       if (mounted) {
@@ -66,7 +69,7 @@ export default function Dashboard({ initialPlace }: DashboardProps) {
            };
         }
 
-        // 2. Identity, Telecom, Currency
+        // 2. Identity, Telecom, Currency Metadata
         if (results[1].status === 'fulfilled' && results[1].value.data.length > 0) {
            const res = results[1].value.data[0];
            newData.identity = {
@@ -86,6 +89,11 @@ export default function Dashboard({ initialPlace }: DashboardProps) {
         // 3. Nearby
         if (results[2].status === 'fulfilled') {
            newData.nearby = results[2].value.data;
+        }
+
+        // 4. Rates
+        if (results[3].status === 'fulfilled') {
+           newData.rates = results[3].value.data.rates;
         }
 
         setData(newData);
@@ -117,7 +125,7 @@ export default function Dashboard({ initialPlace }: DashboardProps) {
         <IdentityCard countryName={initialPlace.country} data={data.identity} loading={loading} />
 
         <TelecomCard data={data.telecom} loading={loading} />
-        <CurrencyCard data={data.currency} loading={loading} />
+        <CurrencyCard data={data.currency} rates={data.rates} loading={loading} />
         <LogisticsCard lat={initialPlace.latitude} lng={initialPlace.longitude} loading={loading} />
 
         <div className="lg:col-span-2">
