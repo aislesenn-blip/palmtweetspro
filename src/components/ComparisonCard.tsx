@@ -21,32 +21,15 @@ export default function ComparisonCard({ loading }: ComparisonCardProps) {
   const handleCompare = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      // Assuming current page is the "base" city, but we need to know it?
-      // Actually, standard Compare URL is /compare/city1-vs-city2
-      // The current page is /city1. So we just need to grab the current city slug from the URL or props.
-      // But this component is generic.
-      // Let's just navigate to a search page or assume we can construct it.
-      // For now, simple input that redirects to a "vs" page.
-      // Better UX: "Compare with..." input.
-      // User types "Tokyo". We go to `current_url_slug-vs-tokyo`.
-      // Getting current slug in client component: usePathname
-
-      // Let's keep it simple: "Search for a city to compare".
       const targetSlug = query.trim().toLowerCase().replace(/\s+/g, '-');
-      // We need the *current* city slug to form the URL.
-      // We can get it from window location or props.
-      // Let's rely on the user being on a city page.
-
       const currentPath = window.location.pathname.split('/');
-      // /en/london -> london is last (or second to last if trailing slash)
       const currentCity = currentPath[currentPath.length - 1] || currentPath[currentPath.length - 2];
-
       router.push(`compare/${currentCity}-vs-${targetSlug}`);
     }
   };
 
   return (
-    <div className="h-full w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
+    <div className="w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
       <div className="flex items-center gap-2 mb-4">
         <ArrowRightLeft className="h-5 w-5 text-purple-500" />
         <h3 className="font-medium text-gray-500">Compare</h3>

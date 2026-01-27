@@ -37,7 +37,7 @@ export default function WeatherCard({ data, loading }: WeatherCardProps) {
   };
 
   return (
-    <div className="h-full w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
+    <div className="w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
       <div className="flex items-center gap-2">
         {getWeatherIcon(data?.code)}
         <h3 className="font-medium text-gray-500">Weather</h3>

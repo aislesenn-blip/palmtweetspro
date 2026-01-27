@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapPin } from 'lucide-react';
 import SkeletonLoader from './SkeletonLoader';
 import { Place } from '@/lib/db';
@@ -16,7 +16,7 @@ export default function NearbyCard({ data, loading }: NearbyCardProps) {
   }
 
   return (
-    <div className="h-full w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
+    <div className="w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
       <div className="flex items-center gap-2">
         <MapPin className="h-5 w-5 text-teal-500" />
         <h3 className="font-medium text-gray-500">Nearby</h3>

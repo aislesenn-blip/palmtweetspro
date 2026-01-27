@@ -29,7 +29,6 @@ function SingleCityColumn({ place }: { place: Place }) {
     let mounted = true;
     async function fetchData() {
       setLoading(true);
-      // Reuse logic from Dashboard (simplified)
       const results = await Promise.allSettled([
         axios.get(`https://api.open-meteo.com/v1/forecast`, {
           params: { latitude: place.latitude, longitude: place.longitude, current: 'temperature_2m,weather_code', timezone: 'auto' }
@@ -72,8 +71,9 @@ function SingleCityColumn({ place }: { place: Place }) {
 }
 
 export default function ComparisonDashboard({ place1, place2 }: ComparisonDashboardProps) {
+  // Use items-start to prevent vertical stretching of columns if content differs
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
        <SingleCityColumn place={place1} />
        <SingleCityColumn place={place2} />
     </div>

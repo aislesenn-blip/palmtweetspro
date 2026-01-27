@@ -16,10 +16,14 @@ export default function HeroImage({ query }: HeroImageProps) {
     async function fetchImage() {
       try {
         const accessKey = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
+
+        // Debugging Key Presence (Safe Log)
         if (!accessKey) {
-            console.warn("Unsplash Key missing");
+            console.error("Unsplash: NEXT_PUBLIC_UNSPLASH_ACCESS_KEY is MISSING in Client Environment.");
             setLoading(false);
             return;
+        } else {
+            console.log(`Unsplash: Key found (starts with ${accessKey.substring(0,4)}...)`);
         }
 
         const response = await axios.get(`https://api.unsplash.com/search/photos`, {
@@ -28,10 +32,13 @@ export default function HeroImage({ query }: HeroImageProps) {
         });
 
         if (mounted && response.data.results.length > 0) {
+          console.log("Unsplash: Image fetched successfully.");
           setImageUrl(response.data.results[0].urls.regular);
+        } else {
+          console.warn("Unsplash: No results found for query:", query);
         }
       } catch (e) {
-        console.error("Unsplash Fetch Error", e);
+        console.error("Unsplash Fetch Error:", e);
       } finally {
         if (mounted) setLoading(false);
       }

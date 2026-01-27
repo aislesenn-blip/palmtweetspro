@@ -15,7 +15,6 @@ export default function CurrencyCard({ data, rates, loading }: CurrencyCardProps
   const [converted, setConverted] = useState<string>('...');
   const [currencyCode, setCurrencyCode] = useState<string>('USD');
 
-  // Detect currency code from data
   useEffect(() => {
     if (data?.currencies) {
       const code = Object.keys(data.currencies)[0];
@@ -23,19 +22,11 @@ export default function CurrencyCard({ data, rates, loading }: CurrencyCardProps
     }
   }, [data]);
 
-  // Conversion Logic
   useEffect(() => {
     if (rates && currencyCode && amount) {
       const rate = rates[currencyCode];
       const usdAmount = parseFloat(amount);
       if (rate && !isNaN(usdAmount)) {
-        // Rate is USD base -> Local. So 1 USD = rate Local.
-        // We want to convert Local Amount to USD? Or USD to Local?
-        // Prompt says: "convert from the local currency to USD (and vice-versa)".
-        // Let's assume standard: Input USD -> Output Local for travel utility.
-        // Or better: show the rate `1 USD = X Local`.
-        // And an input for "Amount in USD".
-
         const val = (usdAmount * rate).toFixed(2);
         setConverted(`${val} ${currencyCode}`);
       }
@@ -55,7 +46,7 @@ export default function CurrencyCard({ data, rates, loading }: CurrencyCardProps
   }
 
   return (
-    <div className="h-full w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
+    <div className="w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
       <div className="flex items-center gap-2 mb-4">
         <Banknote className="h-5 w-5 text-emerald-600" />
         <h3 className="font-medium text-gray-500">Currency Converter</h3>

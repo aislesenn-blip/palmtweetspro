@@ -19,7 +19,7 @@ export default function TelecomCard({ data, loading }: TelecomCardProps) {
   const dialCode = root + suffix || 'N/A';
 
   return (
-    <div className="h-full w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
+    <div className="w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
       <div className="flex items-center gap-2">
         <Phone className="h-5 w-5 text-indigo-500" />
         <h3 className="font-medium text-gray-500">Telecom</h3>

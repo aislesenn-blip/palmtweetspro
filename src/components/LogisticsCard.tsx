@@ -13,8 +13,6 @@ interface LogisticsCardProps {
 
 export default function LogisticsCard({ lat, lng, loading }: LogisticsCardProps) {
   const [postalCode, setPostalCode] = useState<string>('Fetching...');
-
-  // Internal loading state for postal code specifically
   const [postalLoading, setPostalLoading] = useState(true);
 
   useEffect(() => {
@@ -24,7 +22,6 @@ export default function LogisticsCard({ lat, lng, loading }: LogisticsCardProps)
 
       try {
         setPostalLoading(true);
-        // Using OpenStreetMap Nominatim (Free, Client-Side)
         const response = await axios.get(`https://nominatim.openstreetmap.org/reverse`, {
           params: {
             lat: lat,
@@ -48,7 +45,6 @@ export default function LogisticsCard({ lat, lng, loading }: LogisticsCardProps)
       }
     }
 
-    // Only fetch if main loading is done (coords available)
     if (!loading) {
         fetchPostal();
     }
@@ -61,7 +57,7 @@ export default function LogisticsCard({ lat, lng, loading }: LogisticsCardProps)
   }
 
   return (
-    <div className="h-full w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
+    <div className="w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
       <div className="flex items-center gap-2">
         <Truck className="h-5 w-5 text-green-500" />
         <h3 className="font-medium text-gray-500">Logistics</h3>

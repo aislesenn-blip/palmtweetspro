@@ -21,7 +21,7 @@ export default function IdentityCard({ countryName, data, loading }: IdentityCar
   const languages = data?.languages ? Object.values(data.languages).join(', ') : 'Unknown';
 
   return (
-    <div className="h-full w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
+    <div className="w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
       <div className="flex items-center gap-2 mb-4">
         {flagUrl ? (
             <img src={flagUrl} alt={`${countryName} flag`} className="h-6 w-auto rounded-sm shadow-sm" />

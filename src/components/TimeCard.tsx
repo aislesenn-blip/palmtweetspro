@@ -39,7 +39,7 @@ export default function TimeCard({ data, loading }: TimeCardProps) {
   }
 
   return (
-    <div className="h-full w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
+    <div className="w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
       <div className="flex items-center gap-2">
         <Clock className="h-5 w-5 text-orange-500" />
         <h3 className="font-medium text-gray-500">Local Time</h3>
