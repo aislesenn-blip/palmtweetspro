@@ -1,14 +1,8 @@
 import React from 'react';
-import { fetchLocationData } from '@/lib/data';
+import { getPlaceBySlug } from '@/lib/db';
 import { generateSpintaxDescription } from '@/lib/spintax';
 import SchemaMarkup from '@/components/SchemaMarkup';
-import WeatherCard from '@/components/WeatherCard';
-import TimeCard from '@/components/TimeCard';
-import LogisticsCard from '@/components/LogisticsCard';
-import MapCard from '@/components/MapCard';
-import IdentityCard from '@/components/IdentityCard';
-import ComparisonCard from '@/components/ComparisonCard';
-import QuickFactsCard from '@/components/QuickFactsCard';
+import Dashboard from '@/components/Dashboard';
 
 function WikiSection({ content, title }: { content: string | null, title: string }) {
   if (!content) return null;
@@ -30,16 +24,15 @@ function WikiSection({ content, title }: { content: string | null, title: string
 export default async function Page({ params }: { params: { lang: string; slug: string[] } }) {
   const slugStr = params.slug.join('/');
 
-  // Best-effort SSR for SEO/Schema and QuickFacts seeding
-  const { place, weather, currency, idd, wiki } = await fetchLocationData(slugStr);
+  // 1. Fetch Core Place (Server-Side)
+  const place = await getPlaceBySlug(slugStr);
 
   const displayName = place?.name || slugStr.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
-  // Spintax for SEO description
+  // 2. SEO Description (Spintax) - Partial data for SEO
   const description = place ? generateSpintaxDescription({
       name: place.name,
       country: place.country,
-      weather: weather?.weatherCode !== undefined ? 'variable' : undefined,
       timezone: place.description?.match(/Timezone: (.*)\)/)?.[1]
   }) : `Details about ${displayName}`;
 
@@ -48,22 +41,10 @@ export default async function Page({ params }: { params: { lang: string; slug: s
       {place && (
         <SchemaMarkup
           place={place}
-          weather={weather}
-          currency={currency}
-          idd={idd}
+          weather={null}
+          currency={null}
+          idd={null}
           description={description}
-        />
-      )}
-
-      {place && (
-        <QuickFactsCard
-           name={place.name}
-           country={place.country}
-           lat={place.latitude}
-           lng={place.longitude}
-           initialWeatherTime={weather?.time}
-           initialCurrency={currency}
-           initialIdd={idd}
         />
       )}
 
@@ -72,23 +53,18 @@ export default async function Page({ params }: { params: { lang: string; slug: s
         <p className="text-lg text-gray-500">{description}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* Client Components for UI Reliability */}
-        {place && (
-          <>
-            <WeatherCard lat={place.latitude} lng={place.longitude} />
-            <TimeCard lat={place.latitude} lng={place.longitude} />
-            <LogisticsCard lat={place.latitude} lng={place.longitude} countryName={place.country} />
-            <div className="lg:col-span-2">
-               <MapCard />
-            </div>
-            <IdentityCard countryName={place.country} />
-            <ComparisonCard />
-          </>
-        )}
-      </div>
+      {place ? (
+        <Dashboard initialPlace={place} />
+      ) : (
+        <div className="p-10 text-center">Place not found.</div>
+      )}
 
-      <WikiSection content={wiki} title={displayName} />
+      {/* Wiki is fetched client-side or we can keep server-side if essential.
+          For Mini-Superapp, let's keep it simple or move to Dashboard too.
+          Prompt didn't explicitly forbid SSR for Wiki, but for Zero-Failure, Client is safer.
+          I'll leave it as a placeholder here or remove if unused.
+          Actually, I'll remove the server fetch for wiki to comply with "Client-Side Fetching" mandate.
+      */}
     </div>
   );
 }

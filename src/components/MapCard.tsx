@@ -4,15 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { MapPin } from 'lucide-react';
 import SkeletonLoader from './SkeletonLoader';
 
-export default function MapCard() {
-  const [loading, setLoading] = useState(true);
+interface MapCardProps {
+  loading?: boolean;
+}
 
-  useEffect(() => {
-    // Artificial delay
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
+export default function MapCard({ loading }: MapCardProps) {
   if (loading) {
      return <SkeletonLoader className="h-96 w-full" />;
   }

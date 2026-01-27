@@ -1,19 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ArrowRightLeft } from 'lucide-react';
 import Link from 'next/link';
 import SkeletonLoader from './SkeletonLoader';
 
-export default function ComparisonCard() {
-  const [loading, setLoading] = useState(true);
+interface ComparisonCardProps {
+  loading?: boolean;
+}
 
-  useEffect(() => {
-    // Artificial delay
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
+export default function ComparisonCard({ loading }: ComparisonCardProps) {
   if (loading) {
      return <SkeletonLoader className="h-48 w-full" />;
   }
