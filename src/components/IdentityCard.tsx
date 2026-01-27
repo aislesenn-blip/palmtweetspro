@@ -1,7 +1,13 @@
 import React from 'react';
 import { Flag } from 'lucide-react';
 
-export default function IdentityCard({ loading = false }: { loading?: boolean }) {
+export default function IdentityCard({
+  loading = false,
+  country
+}: {
+  loading?: boolean,
+  country?: string
+}) {
   if (loading) {
     return <div className="h-48 w-full animate-pulse rounded-3xl bg-gray-200"></div>;
   }
@@ -12,8 +18,8 @@ export default function IdentityCard({ loading = false }: { loading?: boolean })
         <h3 className="font-medium text-gray-500">Identity</h3>
       </div>
       <div className="mt-4">
-        <div className="text-xl font-bold text-gray-900">United States</div>
-        <p className="text-gray-500">North America</p>
+        <div className="text-xl font-bold text-gray-900">{country || 'Unknown'}</div>
+        <p className="text-gray-500">Global Region</p>
       </div>
     </div>
   );
