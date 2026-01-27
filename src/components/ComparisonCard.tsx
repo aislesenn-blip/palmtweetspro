@@ -1,11 +1,23 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
 import Link from 'next/link';
+import SkeletonLoader from './SkeletonLoader';
 
-export default function ComparisonCard({ loading = false }: { loading?: boolean }) {
+export default function ComparisonCard() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Artificial delay
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   if (loading) {
-    return <div className="h-48 w-full animate-pulse rounded-3xl bg-gray-200"></div>;
+     return <SkeletonLoader className="h-48 w-full" />;
   }
+
   return (
     <div className="h-full w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
       <div className="flex items-center gap-2">

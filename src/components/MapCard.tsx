@@ -1,10 +1,22 @@
-import React from 'react';
-import { MapPin } from 'lucide-react';
+"use client";
 
-export default function MapCard({ loading = false }: { loading?: boolean }) {
+import React, { useEffect, useState } from 'react';
+import { MapPin } from 'lucide-react';
+import SkeletonLoader from './SkeletonLoader';
+
+export default function MapCard() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Artificial delay
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   if (loading) {
-    return <div className="h-96 w-full animate-pulse rounded-3xl bg-gray-200"></div>;
+     return <SkeletonLoader className="h-96 w-full" />;
   }
+
   return (
     <div className="h-96 w-full overflow-hidden rounded-3xl bg-white shadow-sm transition hover:shadow-md relative">
        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">

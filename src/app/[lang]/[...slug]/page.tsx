@@ -8,6 +8,7 @@ import LogisticsCard from '@/components/LogisticsCard';
 import MapCard from '@/components/MapCard';
 import IdentityCard from '@/components/IdentityCard';
 import ComparisonCard from '@/components/ComparisonCard';
+import QuickFactsCard from '@/components/QuickFactsCard';
 
 function WikiSection({ content, title }: { content: string | null, title: string }) {
   if (!content) return null;
@@ -29,7 +30,7 @@ function WikiSection({ content, title }: { content: string | null, title: string
 export default async function Page({ params }: { params: { lang: string; slug: string[] } }) {
   const slugStr = params.slug.join('/');
 
-  // Best-effort SSR for SEO/Schema, but UI will re-fetch or use props.
+  // Best-effort SSR for SEO/Schema and QuickFacts seeding
   const { place, weather, currency, idd, wiki } = await fetchLocationData(slugStr);
 
   const displayName = place?.name || slugStr.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -43,7 +44,7 @@ export default async function Page({ params }: { params: { lang: string; slug: s
   }) : `Details about ${displayName}`;
 
   return (
-    <div className="mx-auto max-w-7xl px-6">
+    <div className="mx-auto max-w-7xl px-6 pt-10">
       {place && (
         <SchemaMarkup
           place={place}
@@ -51,6 +52,18 @@ export default async function Page({ params }: { params: { lang: string; slug: s
           currency={currency}
           idd={idd}
           description={description}
+        />
+      )}
+
+      {place && (
+        <QuickFactsCard
+           name={place.name}
+           country={place.country}
+           lat={place.latitude}
+           lng={place.longitude}
+           initialWeatherTime={weather?.time}
+           initialCurrency={currency}
+           initialIdd={idd}
         />
       )}
 
