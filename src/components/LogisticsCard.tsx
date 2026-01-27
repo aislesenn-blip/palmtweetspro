@@ -1,7 +1,8 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Truck } from 'lucide-react';
+import axios from 'axios';
 import SkeletonLoader from './SkeletonLoader';
 
 interface LogisticsCardProps {
@@ -11,6 +12,50 @@ interface LogisticsCardProps {
 }
 
 export default function LogisticsCard({ lat, lng, loading }: LogisticsCardProps) {
+  const [postalCode, setPostalCode] = useState<string>('Fetching...');
+
+  // Internal loading state for postal code specifically
+  const [postalLoading, setPostalLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchPostal() {
+      if (lat === undefined || lng === undefined) return;
+
+      try {
+        setPostalLoading(true);
+        // Using OpenStreetMap Nominatim (Free, Client-Side)
+        const response = await axios.get(`https://nominatim.openstreetmap.org/reverse`, {
+          params: {
+            lat: lat,
+            lon: lng,
+            format: 'json',
+            zoom: 10
+          }
+        });
+
+        if (mounted && response.data && response.data.address) {
+           const pc = response.data.address.postcode;
+           setPostalCode(pc || 'Not Available');
+        } else {
+           setPostalCode('Not Available');
+        }
+      } catch (e) {
+        console.warn("Postal Fetch Error", e);
+        if (mounted) setPostalCode('Unavailable');
+      } finally {
+        if (mounted) setPostalLoading(false);
+      }
+    }
+
+    // Only fetch if main loading is done (coords available)
+    if (!loading) {
+        fetchPostal();
+    }
+
+    return () => { mounted = false; };
+  }, [lat, lng, loading]);
+
   if (loading) {
     return <SkeletonLoader className="h-48 w-full" />;
   }
@@ -25,7 +70,13 @@ export default function LogisticsCard({ lat, lng, loading }: LogisticsCardProps)
         <div className="text-xl font-bold text-gray-900">
            {lat.toFixed(2)}, {lng.toFixed(2)}
         </div>
-        <p className="text-gray-500">Coordinates</p>
+        <p className="text-gray-500 mb-2">Coordinates</p>
+
+        <div className="pt-2 border-t border-gray-100">
+           <p className="text-sm font-semibold text-gray-900">
+              Postal Code: <span className="font-normal text-gray-600">{postalLoading ? 'Loading...' : postalCode}</span>
+           </p>
+        </div>
       </div>
     </div>
   );

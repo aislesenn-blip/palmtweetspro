@@ -46,7 +46,7 @@ export default function Dashboard({ initialPlace }: DashboardProps) {
           params: { latitude: lat, longitude: lng, current: 'temperature_2m,weather_code', timezone: 'auto' }
         }),
         // Identity, Telecom, Currency
-        axios.get(`https://restcountries.com/v3.1/name/${country}?fields=currencies,idd,region,subregion`),
+        axios.get(`https://restcountries.com/v3.1/name/${country}?fields=currencies,idd,region,subregion,languages,flags`),
         // Nearby (Internal API)
         axios.get(`/api/places/nearby?lat=${lat}&lng=${lng}`)
       ]);
@@ -71,7 +71,9 @@ export default function Dashboard({ initialPlace }: DashboardProps) {
            const res = results[1].value.data[0];
            newData.identity = {
              region: res.region,
-             subregion: res.subregion
+             subregion: res.subregion,
+             flags: res.flags,
+             languages: res.languages
            };
            newData.telecom = {
              idd: res.idd
@@ -106,7 +108,7 @@ export default function Dashboard({ initialPlace }: DashboardProps) {
                 lng={initialPlace.longitude}
                 initialCurrency={data.currency?.currencies}
                 initialIdd={data.telecom?.idd}
-                initialWeatherTime={data.time?.timezone} // Just passing TZ to trigger logic if needed, or null
+                initialWeatherTime={data.time?.timezone}
             />
         </div>
 
@@ -119,7 +121,7 @@ export default function Dashboard({ initialPlace }: DashboardProps) {
         <LogisticsCard lat={initialPlace.latitude} lng={initialPlace.longitude} loading={loading} />
 
         <div className="lg:col-span-2">
-           <MapCard loading={loading} />
+           <MapCard lat={initialPlace.latitude} lng={initialPlace.longitude} loading={loading} />
         </div>
 
         <NearbyCard data={data.nearby} loading={loading} />
