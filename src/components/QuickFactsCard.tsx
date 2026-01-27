@@ -9,7 +9,6 @@ interface QuickFactsCardProps {
   country: string;
   lat: number;
   lng: number;
-  // Optional pre-fetched data from SSR
   initialWeatherTime?: string;
   initialCurrency?: any;
   initialIdd?: any;
@@ -17,6 +16,8 @@ interface QuickFactsCardProps {
 
 export default function QuickFactsCard({ name, country, lat, lng, initialWeatherTime, initialCurrency, initialIdd }: QuickFactsCardProps) {
   const [summary, setSummary] = useState<string>('');
+  const [wikiExtract, setWikiExtract] = useState<string | null>(null);
+  const [wikiUrl, setWikiUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,65 +26,78 @@ export default function QuickFactsCard({ name, country, lat, lng, initialWeather
     async function generateSummary() {
       try {
         setLoading(true);
-        // We need: Currency, Dial Code, Time.
-        // If passed via props (SSR), use them. Else fetch.
 
         let currencyName = "Unknown Currency";
         let dialCode = "Unknown Code";
         let time = initialWeatherTime || "Unknown Time";
 
-        // 1. Fetch Country Info (Currency, IDD) if needed
+        // Parallel Fetch: Wiki & Missing Data
+        const promises: Promise<any>[] = [];
+
+        // 1. Wiki Fetch
+        promises.push(
+            axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${name}`)
+                 .catch(() => null) // Ignore wiki errors
+        );
+
+        // 2. Fetch Country Info if needed
         if (!initialCurrency || !initialIdd) {
-             try {
-                 const countryRes = await axios.get(`https://restcountries.com/v3.1/name/${country}?fields=currencies,idd`, { timeout: 3000 });
-                 if (countryRes.data && countryRes.data.length > 0) {
-                     const cData = countryRes.data[0];
-                     if (cData.currencies) {
-                         const cCode = Object.keys(cData.currencies)[0];
-                         currencyName = `${cData.currencies[cCode].name} (${cCode})`;
-                     }
-                     if (cData.idd) {
-                         dialCode = `${cData.idd.root}${cData.idd.suffixes?.[0] || ''}`;
-                     }
-                 }
-             } catch (e) {
-                 console.warn("QuickFacts: Failed to fetch country info", e);
-             }
+             promises.push(axios.get(`https://restcountries.com/v3.1/name/${country}?fields=currencies,idd`));
         } else {
-             const cCode = Object.keys(initialCurrency)[0];
-             currencyName = `${initialCurrency[cCode].name} (${cCode})`;
-             dialCode = `${initialIdd.root}${initialIdd.suffixes?.[0] || ''}`;
+             promises.push(Promise.resolve(null));
         }
 
-        // 2. Fetch Time if needed
+        // 3. Fetch Time if needed
         if (!initialWeatherTime) {
-            try {
-                 const timeRes = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&timezone=auto&current=time`, { timeout: 3000 });
-                 if (timeRes.data?.current?.time) {
-                     // Format: 2023-10-10T14:30
-                     const date = new Date(timeRes.data.current.time);
-                     time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                 }
-            } catch (e) {
-                 console.warn("QuickFacts: Failed to fetch time", e);
-            }
+            promises.push(axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&timezone=auto&current=time`));
         } else {
-             // If initial time is ISO string
-             const date = new Date(initialWeatherTime);
-             if (!isNaN(date.getTime())) {
-                  time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-             } else {
-                  time = initialWeatherTime;
-             }
+            promises.push(Promise.resolve(null));
         }
+
+        const [wikiRes, countryRes, timeRes] = await Promise.all(promises);
 
         if (mounted) {
+            // Process Wiki
+            if (wikiRes && wikiRes.data) {
+                setWikiExtract(wikiRes.data.extract);
+                setWikiUrl(wikiRes.data.content_urls?.desktop?.page);
+            }
+
+            // Process Country
+            if (countryRes && countryRes.data && countryRes.data.length > 0) {
+                 const cData = countryRes.data[0];
+                 if (cData.currencies) {
+                     const cCode = Object.keys(cData.currencies)[0];
+                     currencyName = `${cData.currencies[cCode].name} (${cCode})`;
+                 }
+                 if (cData.idd) {
+                     dialCode = `${cData.idd.root}${cData.idd.suffixes?.[0] || ''}`;
+                 }
+            } else if (initialCurrency && initialIdd) {
+                 const cCode = Object.keys(initialCurrency)[0];
+                 currencyName = `${initialCurrency[cCode].name} (${cCode})`;
+                 dialCode = `${initialIdd.root}${initialIdd.suffixes?.[0] || ''}`;
+            }
+
+            // Process Time
+            if (timeRes && timeRes.data?.current?.time) {
+                 const date = new Date(timeRes.data.current.time);
+                 time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } else if (initialWeatherTime) {
+                 const date = new Date(initialWeatherTime);
+                 if (!isNaN(date.getTime())) {
+                      time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                 } else {
+                      time = initialWeatherTime;
+                 }
+            }
+
             setSummary(`${name} is a key location in ${country}. The local dial code is ${dialCode}, and the currency used is ${currencyName}. Current time: ${time}.`);
         }
 
       } catch (e) {
           console.error("QuickFacts Error", e);
-          if (mounted) setSummary(`Explore data for ${name}, ${country}.`); // Graceful fallback
+          if (mounted) setSummary(`Explore data for ${name}, ${country}.`);
       } finally {
           if (mounted) setLoading(false);
       }
@@ -94,15 +108,26 @@ export default function QuickFactsCard({ name, country, lat, lng, initialWeather
   }, [name, country, lat, lng, initialWeatherTime, initialCurrency, initialIdd]);
 
   if (loading) {
-      return <SkeletonLoader className="h-24 w-full mb-8" />;
+      return <SkeletonLoader className="h-48 w-full mb-8" />;
   }
 
   return (
     <div className="mb-8 rounded-3xl bg-blue-50 p-6 shadow-sm border border-blue-100">
        <h2 className="text-sm font-bold uppercase tracking-wide text-blue-600 mb-2">Quick Insights</h2>
-       <p className="text-lg text-blue-900 font-medium leading-relaxed">
+       <p className="text-lg text-blue-900 font-medium leading-relaxed mb-4">
          {summary}
        </p>
+
+       {wikiExtract && (
+         <div className="mt-4 pt-4 border-t border-blue-200 text-sm text-blue-800">
+            <p className="line-clamp-2">{wikiExtract}</p>
+            {wikiUrl && (
+                <a href={wikiUrl} target="_blank" rel="noopener noreferrer" className="block mt-2 font-semibold hover:underline">
+                    Source: Wikipedia
+                </a>
+            )}
+         </div>
+       )}
     </div>
   );
 }
