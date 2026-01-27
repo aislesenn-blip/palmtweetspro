@@ -1,5 +1,7 @@
 import React from 'react';
-import { getPlaceBySlug, getWeather } from '@/lib/db';
+import { fetchLocationData } from '@/lib/data';
+import { generateSpintaxDescription } from '@/lib/spintax';
+import SchemaMarkup from '@/components/SchemaMarkup';
 import WeatherCard from '@/components/WeatherCard';
 import TimeCard from '@/components/TimeCard';
 import LogisticsCard from '@/components/LogisticsCard';
@@ -7,25 +9,51 @@ import MapCard from '@/components/MapCard';
 import IdentityCard from '@/components/IdentityCard';
 import ComparisonCard from '@/components/ComparisonCard';
 
+function WikiSection({ content, title }: { content: string | null, title: string }) {
+  if (!content) return null;
+  return (
+    <div className="mt-8 rounded-3xl bg-white p-8 shadow-sm">
+       <h2 className="mb-4 text-2xl font-bold text-gray-900">About {title}</h2>
+       <div className="prose text-gray-600">
+         <p>{content}</p>
+       </div>
+       <div className="mt-4 border-t pt-4 text-sm text-gray-500">
+         <p>
+           Source: <a href={`https://en.wikipedia.org/wiki/${title}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Wikipedia</a> (CC-BY-SA)
+         </p>
+       </div>
+    </div>
+  );
+}
+
 export default async function Page({ params }: { params: { lang: string; slug: string[] } }) {
   const slugStr = params.slug.join('/');
 
-  // This will now auto-init DB and fetch from API if needed
-  const place = await getPlaceBySlug(slugStr);
+  const { place, weather, currency, idd, wiki } = await fetchLocationData(slugStr);
 
-  let weather = null;
-  if (place) {
-    weather = await getWeather(place.latitude, place.longitude);
-  }
-
-  // Format a fallback title if place is missing (though getPlaceBySlug should try its best)
   const displayName = place?.name || slugStr.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const description = place ? generateSpintaxDescription({
+      name: place.name,
+      country: place.country,
+      weather: weather?.weatherCode !== undefined ? 'variable' : undefined, // Simplify for spintax
+      timezone: place.description?.match(/Timezone: (.*)\)/)?.[1]
+  }) : `Details about ${displayName}`;
 
   return (
     <div className="mx-auto max-w-7xl px-6">
+      {place && (
+        <SchemaMarkup
+          place={place}
+          weather={weather}
+          currency={currency}
+          idd={idd}
+          description={description}
+        />
+      )}
+
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-gray-900">{displayName}</h1>
-        <p className="text-lg text-gray-500">{place?.country || place?.description || 'Details unavailable'}</p>
+        <p className="text-lg text-gray-500">{description}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -35,9 +63,6 @@ export default async function Page({ params }: { params: { lang: string; slug: s
         />
         <TimeCard
           time={weather?.time}
-          // OpenMeteo gives us time, but not timezone name directly in "current",
-          // but we can assume local time is what we got.
-          // Or we could fetch timezone info. For now, let's just pass the time.
           timezone={place?.description?.match(/Timezone: (.*)\)/)?.[1]}
         />
         <LogisticsCard
@@ -50,6 +75,8 @@ export default async function Page({ params }: { params: { lang: string; slug: s
         <IdentityCard country={place?.country} />
         <ComparisonCard />
       </div>
+
+      <WikiSection content={wiki} title={displayName} />
     </div>
   );
 }

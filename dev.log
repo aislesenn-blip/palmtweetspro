@@ -5,7 +5,18 @@
  ⚠ Port 3000 is in use, trying 3001 instead.
  ⚠ Port 3001 is in use, trying 3002 instead.
   ▲ Next.js 14.2.35
-  - Local:        http://localhost:3002
+  - Local:        http://localho ⚠ Found a change in next.config.js. Restarting the server to apply the changes...
+ ⚠ Port 3000 is in use, trying 3001 instead.
+ ⚠ Port 3001 is in use, trying 3002 instead.
+ ⚠ Port 3002 is in use, trying 3003 instead.
+ ⚠ Port 3003 is in use, trying 3004 instead.
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3003
 
  ✓ Starting...
- ✓ Ready in 1801ms
+ ✓ Ready in 7.6s
+ Next.js 14.2.35
+  - Local:        http://localhost:3006
+
+ ✓ Starting...
+ ✓ Ready in 7.1s

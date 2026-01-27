@@ -16,6 +16,11 @@ export function middleware(request: NextRequest) {
       new URL(`/${locale}${pathname.startsWith('/') ? '' : '/'}${pathname}`, request.url)
     )
   }
+
+  // Add Last-Modified header for freshness
+  const response = NextResponse.next();
+  response.headers.set('Last-Modified', new Date().toUTCString());
+  return response;
 }
 
 export const config = {
