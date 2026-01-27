@@ -15,13 +15,13 @@ export default async function Page({ params }: { params: { lang: string; slugs: 
         <div>
            <h2 className="text-xl font-bold mb-4">{place1?.name || slug1}</h2>
            <div className="space-y-4">
-             <WeatherCard />
+             {place1 ? <WeatherCard lat={place1.latitude} lng={place1.longitude} /> : <p>Invalid Place</p>}
            </div>
         </div>
         <div>
            <h2 className="text-xl font-bold mb-4">{place2?.name || slug2}</h2>
            <div className="space-y-4">
-             <WeatherCard />
+             {place2 ? <WeatherCard lat={place2.latitude} lng={place2.longitude} /> : <p>Invalid Place</p>}
            </div>
         </div>
       </div>

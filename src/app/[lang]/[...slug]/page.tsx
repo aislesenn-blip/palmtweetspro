@@ -29,13 +29,16 @@ function WikiSection({ content, title }: { content: string | null, title: string
 export default async function Page({ params }: { params: { lang: string; slug: string[] } }) {
   const slugStr = params.slug.join('/');
 
+  // Best-effort SSR for SEO/Schema, but UI will re-fetch or use props.
   const { place, weather, currency, idd, wiki } = await fetchLocationData(slugStr);
 
   const displayName = place?.name || slugStr.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+  // Spintax for SEO description
   const description = place ? generateSpintaxDescription({
       name: place.name,
       country: place.country,
-      weather: weather?.weatherCode !== undefined ? 'variable' : undefined, // Simplify for spintax
+      weather: weather?.weatherCode !== undefined ? 'variable' : undefined,
       timezone: place.description?.match(/Timezone: (.*)\)/)?.[1]
   }) : `Details about ${displayName}`;
 
@@ -57,23 +60,19 @@ export default async function Page({ params }: { params: { lang: string; slug: s
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <WeatherCard
-          temperature={weather?.temperature}
-          weatherCode={weather?.weatherCode}
-        />
-        <TimeCard
-          time={weather?.time}
-          timezone={place?.description?.match(/Timezone: (.*)\)/)?.[1]}
-        />
-        <LogisticsCard
-          lat={place?.latitude}
-          lng={place?.longitude}
-        />
-        <div className="lg:col-span-2">
-           <MapCard />
-        </div>
-        <IdentityCard country={place?.country} />
-        <ComparisonCard />
+        {/* Client Components for UI Reliability */}
+        {place && (
+          <>
+            <WeatherCard lat={place.latitude} lng={place.longitude} />
+            <TimeCard lat={place.latitude} lng={place.longitude} />
+            <LogisticsCard lat={place.latitude} lng={place.longitude} countryName={place.country} />
+            <div className="lg:col-span-2">
+               <MapCard />
+            </div>
+            <IdentityCard countryName={place.country} />
+            <ComparisonCard />
+          </>
+        )}
       </div>
 
       <WikiSection content={wiki} title={displayName} />
