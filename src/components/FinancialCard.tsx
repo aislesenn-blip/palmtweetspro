@@ -5,7 +5,8 @@ import { Wallet, TrendingUp, Info } from 'lucide-react';
 import SkeletonLoader from './SkeletonLoader';
 
 interface FinancialCardProps {
-  details?: Record<string, string>; // "Meal: $15", "Rent: $1200"
+  // Supports legacy flat object OR new API response structure
+  details?: Record<string, string> | { costs: Record<string, string> | null; source: string; banking: string } | null;
   countryCode: string;
   loading?: boolean;
 }
@@ -15,10 +16,28 @@ export default function FinancialCard({ details, countryCode, loading }: Financi
     return <SkeletonLoader className="h-64 w-full" />;
   }
 
-  // Standard IBAN lengths (simplified)
-  const ibanLength = countryCode === 'GB' ? 22 : countryCode === 'FR' ? 27 : countryCode === 'DE' ? 22 : 'Varies';
+  // Normalize Data
+  let costs: Record<string, string> | null = null;
+  let source = "Estimated";
+  let bankingInfo = null;
 
-  const hasData = details && Object.values(details).some(x => x !== null);
+  if (details) {
+      if ('costs' in details && (details as any).costs) {
+          // New Structure
+          const d = details as any;
+          costs = d.costs;
+          source = d.source || "Estimated";
+          bankingInfo = d.banking;
+      } else if (!('costs' in details)) {
+          // Legacy/Flat Structure (if any)
+          costs = details as Record<string, string>;
+      }
+  }
+
+  // Fallback Banking logic if API didn't provide it
+  const ibanDisplay = bankingInfo || `${countryCode}XX (Varies)`;
+
+  const hasData = costs && Object.values(costs).some(x => x !== null);
 
   return (
     <div className="w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
@@ -31,9 +50,13 @@ export default function FinancialCard({ details, countryCode, loading }: Financi
         {/* Cost Index */}
         {hasData ? (
            <div className="space-y-3">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Estimated Costs</p>
-              {Object.entries(details!).map(([key, val]) => (
-                 val && (
+              <div className="flex justify-between items-baseline">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Estimated Costs</p>
+                  <span className="text-[10px] text-gray-300 italic">{source}</span>
+              </div>
+
+              {Object.entries(costs!).map(([key, val]) => (
+                 val && typeof val === 'string' && (
                    <div key={key} className="flex justify-between text-sm border-b border-gray-50 pb-2 last:border-0">
                       <span className="text-gray-600">{key}</span>
                       <span className="font-bold text-gray-900">{val}</span>
@@ -52,9 +75,9 @@ export default function FinancialCard({ details, countryCode, loading }: Financi
         <div>
            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Banking Standard</p>
            <div className="bg-emerald-50 p-3 rounded-xl flex justify-between items-center">
-              <span className="text-sm text-emerald-800 font-medium">IBAN Format</span>
-              <span className="bg-white px-2 py-1 rounded text-xs font-mono text-gray-600 border border-emerald-100">
-                 {countryCode}XX ({ibanLength} chars)
+              <span className="text-sm text-emerald-800 font-medium">Format</span>
+              <span className="bg-white px-2 py-1 rounded text-xs font-mono text-gray-600 border border-emerald-100 truncate max-w-[150px]" title={ibanDisplay}>
+                 {ibanDisplay}
               </span>
            </div>
            <div className="flex gap-2 mt-2 text-[10px] text-gray-400">
