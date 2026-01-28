@@ -1,0 +1,21 @@
+{
+  "weather": "天気",
+  "distance": "距離",
+  "visa": "ビザ",
+  "cost": "生活費",
+  "logistics": "物流",
+  "govt": "政府",
+  "currency": "通貨",
+  "population": "人口",
+  "drive": "運転",
+  "walk": "徒歩",
+  "fly": "飛行機",
+  "to": "へ",
+  "from": "から",
+  "expect": "期待できること",
+  "insights": "地域の情報",
+  "unavailable": "データなし",
+  "check_embassy": "大使館を確認",
+  "nearest": "最寄り",
+  "select_month": "月を選択"
+}

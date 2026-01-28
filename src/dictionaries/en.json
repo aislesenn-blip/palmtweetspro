@@ -1,1 +1,21 @@
-{ "weather": "Weather", "zip": "Zip Code", "compare": "Compare" }
+{
+  "weather": "Weather",
+  "distance": "Distance",
+  "visa": "Visa",
+  "cost": "Cost of Living",
+  "logistics": "Logistics",
+  "govt": "Government",
+  "currency": "Currency",
+  "population": "Population",
+  "drive": "Drive",
+  "walk": "Walk",
+  "fly": "Fly",
+  "to": "to",
+  "from": "from",
+  "expect": "What to Expect",
+  "insights": "Local Insights",
+  "unavailable": "Data Unavailable",
+  "check_embassy": "Check Embassy",
+  "nearest": "Nearest",
+  "select_month": "Select Month"
+}

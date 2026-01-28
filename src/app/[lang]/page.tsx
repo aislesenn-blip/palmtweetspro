@@ -1,5 +1,24 @@
 import Link from 'next/link';
 import HeroSearch from './HeroSearch';
+import { locales } from '@/lib/navigation';
+import { Metadata } from 'next';
+
+export async function generateMetadata({ params }: { params: { lang: string } }): Promise<Metadata> {
+    // Hreflang Logic
+    const alternates: Record<string, string> = {};
+    locales.forEach(loc => {
+        alternates[loc] = `https://palmtweets.com/${loc}`;
+    });
+    alternates['x-default'] = `https://palmtweets.com/en`;
+
+    return {
+        title: 'Palmtweets - Global Location OS',
+        description: 'Instant access to Global Data. Weather, Visa, Cost, and more.',
+        alternates: {
+            languages: alternates,
+        },
+    };
+}
 
 export default function Page({ params: { lang } }: { params: { lang: string } }) {
   return (

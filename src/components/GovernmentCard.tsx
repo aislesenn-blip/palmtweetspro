@@ -1,13 +1,22 @@
 "use client";
 
-import React from 'react';
-import { Shield, Siren, Car, FileCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { Shield, Siren, Car, FileCheck, X, Briefcase, GraduationCap, Plane, Heart, Stamp } from 'lucide-react';
 import SkeletonLoader from './SkeletonLoader';
 import { getEmergencyNumbers } from '@/lib/emergency';
 
+interface VisaDetails {
+    tourist: string;
+    student: string;
+    business: string;
+    work: string;
+    transit: string;
+    volunteer: string;
+}
+
 interface GovernmentCardProps {
   countryCode: string; // ISO 2 char
-  visa?: string;
+  visa?: string | VisaDetails; // Support Legacy String or New Object
   driving?: {
       side: string;
       minAge: number;
@@ -18,17 +27,29 @@ interface GovernmentCardProps {
 }
 
 export default function GovernmentCard({ countryCode, visa, driving, carSide, loading }: GovernmentCardProps) {
+  const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'tourist' | 'student' | 'business' | 'work' | 'transit' | 'volunteer'>('tourist');
+
   if (loading) {
     return <SkeletonLoader className="h-64 w-full" />;
   }
 
-  // Emergency still static/local for now as per previous implementation,
-  // or could move to API. API `government` route didn't return emergency.
-  // I'll keep local for Emergency to save API response size if it's static dictionary.
   const emergency = getEmergencyNumbers(countryCode);
+  const isVisaObject = typeof visa === 'object' && visa !== null;
+  const mainVisaText = isVisaObject ? (visa as VisaDetails).tourist : visa;
+
+  const tabs = [
+      { id: 'tourist', label: 'Tourist', icon: Stamp },
+      { id: 'business', label: 'Business', icon: Briefcase },
+      { id: 'student', label: 'Student', icon: GraduationCap },
+      { id: 'work', label: 'Work', icon: Briefcase }, // Re-using briefcase for work
+      { id: 'transit', label: 'Transit', icon: Plane },
+      { id: 'volunteer', label: 'Volunteer', icon: Heart },
+  ];
 
   return (
-    <div className="w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
+    <>
+    <div className="w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md relative">
       <div className="flex items-center gap-2 mb-6">
         <Shield className="h-5 w-5 text-red-600" />
         <h3 className="font-medium text-gray-500">Government & Legal</h3>
@@ -41,7 +62,16 @@ export default function GovernmentCard({ countryCode, visa, driving, carSide, lo
                <FileCheck className="h-4 w-4 text-red-600" />
                <p className="text-xs font-semibold text-red-600 uppercase tracking-wider">Visa Policy</p>
            </div>
-           <p className="text-sm font-bold text-gray-900">{visa || 'Check Embassy'}</p>
+           <p className="text-sm font-bold text-gray-900 line-clamp-2">{mainVisaText || 'Check Embassy'}</p>
+
+           {isVisaObject && (
+               <button
+                onClick={() => setShowModal(true)}
+                className="mt-3 text-xs font-semibold text-red-600 hover:text-red-700 underline"
+               >
+                   View Full Requirements
+               </button>
+           )}
         </div>
 
         {/* Driving */}
@@ -88,8 +118,58 @@ export default function GovernmentCard({ countryCode, visa, driving, carSide, lo
               </div>
            </div>
         </div>
-
       </div>
     </div>
+
+    {/* Visa Modal */}
+    {showModal && isVisaObject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                        <FileCheck className="h-5 w-5 text-red-600" />
+                        Visa Requirements
+                    </h3>
+                    <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-200 rounded-full transition">
+                        <X className="h-5 w-5 text-gray-500" />
+                    </button>
+                </div>
+
+                <div className="flex border-b border-gray-200 overflow-x-auto">
+                    {tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id as any)}
+                                className={`flex-1 min-w-[80px] py-3 text-xs font-medium flex flex-col items-center gap-1 transition-colors border-b-2 ${activeTab === tab.id ? 'border-red-600 text-red-600 bg-red-50' : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50'}`}
+                            >
+                                <Icon className="h-4 w-4" />
+                                {tab.label}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <div className="p-6 min-h-[200px] flex items-center justify-center text-center">
+                    <div>
+                         <p className="text-xl font-bold text-gray-900 mb-2">
+                             {(visa as VisaDetails)[activeTab]}
+                         </p>
+                         <p className="text-sm text-gray-500">
+                             Requirements for {activeTab} travelers. Always verify with the official embassy before booking.
+                         </p>
+                    </div>
+                </div>
+
+                <div className="p-4 bg-gray-50 text-center border-t border-gray-100">
+                    <a href="#" className="text-sm font-semibold text-blue-600 hover:underline">
+                        Visit Official Government Portal &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+    )}
+    </>
   );
 }

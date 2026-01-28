@@ -1,0 +1,21 @@
+{
+  "weather": "天气",
+  "distance": "距离",
+  "visa": "签证",
+  "cost": "生活成本",
+  "logistics": "物流",
+  "govt": "政府",
+  "currency": "货币",
+  "population": "人口",
+  "drive": "驾驶",
+  "walk": "步行",
+  "fly": "飞行",
+  "to": "至",
+  "from": "从",
+  "expect": "预期情况",
+  "insights": "当地见解",
+  "unavailable": "暂无数据",
+  "check_embassy": "查询大使馆",
+  "nearest": "最近",
+  "select_month": "选择月份"
+}

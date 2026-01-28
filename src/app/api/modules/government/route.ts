@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   }
 
   // Cache key depends on what we have. Prefer cca2 if possible, but for name we need a unique key.
-  const cacheKey = `government:${cca2Param || countryParam}`;
+  const cacheKey = `government_v2:${cca2Param || countryParam}`;
 
   const data = await fetchWithCache(
       cacheKey,
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
           if (!code) return { visa: null, driving: null };
 
-          const visa = getVisaInfo(code);
+          const visa = getVisaInfo(code); // Now returns object
           const driving = getDrivingRules(code);
 
           return {
