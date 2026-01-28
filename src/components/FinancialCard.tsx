@@ -1,23 +1,24 @@
 "use client";
 
 import React from 'react';
-import { Wallet, TrendingUp } from 'lucide-react';
+import { Wallet, TrendingUp, Info } from 'lucide-react';
 import SkeletonLoader from './SkeletonLoader';
 
 interface FinancialCardProps {
-  cityScore?: number; // Teleport score? Or cost index?
   details?: Record<string, string>; // "Meal: $15", "Rent: $1200"
   countryCode: string;
   loading?: boolean;
 }
 
-export default function FinancialCard({ cityScore, details, countryCode, loading }: FinancialCardProps) {
+export default function FinancialCard({ details, countryCode, loading }: FinancialCardProps) {
   if (loading) {
     return <SkeletonLoader className="h-64 w-full" />;
   }
 
   // Standard IBAN lengths (simplified)
   const ibanLength = countryCode === 'GB' ? 22 : countryCode === 'FR' ? 27 : countryCode === 'DE' ? 22 : 'Varies';
+
+  const hasData = details && Object.values(details).some(x => x !== null);
 
   return (
     <div className="w-full rounded-3xl bg-white p-6 shadow-sm transition hover:shadow-md">
@@ -28,14 +29,16 @@ export default function FinancialCard({ cityScore, details, countryCode, loading
 
       <div className="space-y-6">
         {/* Cost Index */}
-        {details ? (
+        {hasData ? (
            <div className="space-y-3">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Average Costs</p>
-              {Object.entries(details).map(([key, val]) => (
-                 <div key={key} className="flex justify-between text-sm">
-                    <span className="text-gray-600">{key}</span>
-                    <span className="font-bold text-gray-900">{val}</span>
-                 </div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Estimated Costs</p>
+              {Object.entries(details!).map(([key, val]) => (
+                 val && (
+                   <div key={key} className="flex justify-between text-sm border-b border-gray-50 pb-2 last:border-0">
+                      <span className="text-gray-600">{key}</span>
+                      <span className="font-bold text-gray-900">{val}</span>
+                   </div>
+                 )
               ))}
            </div>
         ) : (
@@ -53,6 +56,10 @@ export default function FinancialCard({ cityScore, details, countryCode, loading
               <span className="bg-white px-2 py-1 rounded text-xs font-mono text-gray-600 border border-emerald-100">
                  {countryCode}XX ({ibanLength} chars)
               </span>
+           </div>
+           <div className="flex gap-2 mt-2 text-[10px] text-gray-400">
+               <Info className="h-3 w-3" />
+               <span>Always verify with local banks.</span>
            </div>
         </div>
       </div>
