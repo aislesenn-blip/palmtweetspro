@@ -1,0 +1,40 @@
+name: Seed Turso Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      dataset:
+        description: 'Dataset to ingest (locations or postcodes)'
+        required: true
+        default: 'locations'
+        type: choice
+        options:
+        - locations
+        - postcodes
+      country_code:
+        description: 'Country Code Filter (e.g. US, GB) - Optional'
+        required: false
+        default: ''
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Ingestion Script
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          node scripts/seed-turso.js ${{ inputs.dataset }} ${{ inputs.country_code }}
