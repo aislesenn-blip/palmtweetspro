@@ -1,0 +1,107 @@
+// Simplified IBAN Registry
+// Format: Country Code -> IBAN Example/Structure
+export const ibanRegistry: Record<string, string> = {
+  AL: "ALkk bbbs sssx xxxx xxxx xxxx xxxx",
+  AD: "ADkk bbbb ssss xxxx xxxx xxxx",
+  AT: "ATkk bbbb bxxx xxxx xxxx",
+  AZ: "AZkk bbbb cccc cccc cccc cccc cccc",
+  BH: "BHkk bbbb cccc cccc cccc cc",
+  BE: "BEkk bbbx xxxx xx",
+  BA: "BAkk bbbs ssxx xxxx xx",
+  BR: "BRkk bbbb bbbb ssss sccc cccc cccl n",
+  BG: "BGkk bbbb ssss ddcc cccc cc",
+  CR: "CRkk 0bbb cccc cccc cccc cc",
+  HR: "HRkk bbbb bbbc cccc cccc c",
+  CY: "CYkk bbbs ssss xxxx xxxx xxxx xxxx",
+  CZ: "CZkk bbbb ssss ssxx xxxx xxxx",
+  DK: "DKkk bbbb xxxx xxxx xx",
+  DO: "DOkk bbbb cccc cccc cccc cccc cccc",
+  EE: "EEkk bbss xxxx xxxx xxxx x",
+  FO: "FOkk bbbb xxxx xxxx x",
+  FI: "FIkk bbbb xxcc cccc cX",
+  FR: "FRkk bbbb bggg ggcc cccc cccc cxx",
+  GE: "GEkk bbcc cccc cccc cccc cc",
+  DE: "DEkk bbbb bbbb cccc cccc cc",
+  GI: "GIkk bbbb cccc cccc cccc ccc",
+  GR: "GRkk bbbs sssc cccc cccc cccc ccc",
+  GL: "GLkk bbbb xxxx xxxx x",
+  GT: "GTkk bbbb cccc cccc cccc cccc cccc",
+  HU: "HUkk bbbb bbbx xxxx xxxx xxxx xxxx",
+  IS: "ISkk bbbb sscc cccc iiii iiii ii",
+  IE: "IEkk bbbb ssss xxcc cccc cc",
+  IL: "ILkk bbbn nncc cccc cccc cc",
+  IT: "ITkk xbbb bbaa aaac cccc cccc cc",
+  JO: "JOkk bbbb ssss cccc cccc cccc cccc ccho",
+  KZ: "KZkk bbbx xxxx xxxx xxxx",
+  XK: "XKkk bbbb xxxx xxxx xxxx",
+  KW: "KWkk bbbb cccc cccc cccc cccc cccc cc",
+  LV: "LVkk bbbb cccc cccc cccc c",
+  LB: "LBkk bbbb cccc cccc cccc cccc cccc",
+  LI: "LIkk bbbb bccc cccc cccc c",
+  LT: "LTkk bbbb bccc cccc cccc",
+  LU: "LUkk bbbc cccc cccc cccc",
+  MK: "MKkk bbbc cccc cccc cxx",
+  MT: "MTkk bbbb ssss sccc cccc cccc cccc ccc",
+  MR: "MRkk bbbb bsss ssc c cccc cccc xx",
+  MU: "MUkk bbbb bbss cccc cccc cccc cccc cc",
+  MC: "MCkk bbbb bsss sscc cccc cccc cxx",
+  MD: "MDkk bbcc cccc cccc cccc cccc",
+  ME: "MEkk bbbc cccc cccc cxxx",
+  NL: "NLkk bbbb cccc cccc cc",
+  NO: "NOkk bbbb cccc ccx",
+  PK: "PKkk bbbb cccc cccc cccc cccc",
+  PS: "PSkk bbbb xxxx xxxx xxxx xxxx xxxx",
+  PL: "PLkk bbbb bbbb xxxx xxxx xxxx xxxx",
+  PT: "PTkk bbbb ssss cccc cccc cccc c",
+  QA: "QAkk bbbb cccc cccc cccc cccc ccc",
+  RO: "ROkk bbbb cccc cccc cccc cccc",
+  LC: "LCkk bbbb cccc cccc cccc cccc cccc cccc",
+  SM: "SMkk xbbb bbaa aaac cccc cccc cc",
+  ST: "STkk bbbb ssss cccc cccc cccc cccc",
+  SA: "SAkk bbbb cccc cccc cccc cccc",
+  RS: "RSkk bbbc cccc cccc cxxx",
+  SC: "SCkk bbbb ssss cccc cccc cccc cccc cccc",
+  SK: "SKkk bbbb ssss ssxx xxxx xxxx",
+  SI: "SIkk bbbb bccc cccc cccc c",
+  ES: "ESkk bbbb ssss xxcc cccc cccc",
+  SE: "SEkk bbbx xxxx xxxx xxxx xxxx",
+  CH: "CHkk bbbb bccc cccc cccc c",
+  TL: "TLkk bbbb cccc cccc cccc cccc ccc",
+  TN: "TNkk bbbb bsss cccc cccc cccc",
+  TR: "TRkk bbbb bxcc cccc cccc cccc cc",
+  UA: "UAkk bbbb bbcc cccc cccc cccc cccc c",
+  AE: "AEkk bbbb cccc cccc cccc ccc",
+  GB: "GBkk bbbb ssss sscc cccc cc",
+  VA: "VAkk bbbc cccc cccc cccc cc",
+  VG: "VGkk bbbb cccc cccc cccc cccc",
+  // Non-IBAN notable
+  US: "Routing Number (9) + Account Number",
+  CA: "Transit (5) + Inst (3) + Account (7-12)",
+  JP: "Bank Code (4) + Branch (3) + Type + Account",
+  CN: "Bank Name + Account Number",
+  AU: "BSB (6) + Account Number",
+  NZ: "Bank (2) + Branch (4) + Account (7) + Suffix",
+};
+
+export const getBankingInfo = (countryCode: string) => {
+    return ibanRegistry[countryCode] || "Standard Swift/BIC + Account Number";
+};
+
+// WorldBank / Numbeo Approx Fallback Indices (Cost of Living Index, Base NYC=100)
+// Simplified static map for top countries to ensure we never have blanks
+export const countryCostIndex: Record<string, any> = {
+    "US": { "Lunch": "$20.00", "Cappuccino": "$5.00", "Apartment (Month)": "$2000.00", "Beer": "$7.00" },
+    "GB": { "Lunch": "$18.00", "Cappuccino": "$4.50", "Apartment (Month)": "$1800.00", "Beer": "$6.50" },
+    "JP": { "Lunch": "$10.00", "Cappuccino": "$3.50", "Apartment (Month)": "$1200.00", "Beer": "$4.00" },
+    "DE": { "Lunch": "$15.00", "Cappuccino": "$4.00", "Apartment (Month)": "$1400.00", "Beer": "$5.00" },
+    "FR": { "Lunch": "$18.00", "Cappuccino": "$4.50", "Apartment (Month)": "$1500.00", "Beer": "$6.00" },
+    "CN": { "Lunch": "$6.00", "Cappuccino": "$3.50", "Apartment (Month)": "$900.00", "Beer": "$2.00" },
+    "IN": { "Lunch": "$3.00", "Cappuccino": "$2.00", "Apartment (Month)": "$400.00", "Beer": "$2.50" },
+    "BR": { "Lunch": "$7.00", "Cappuccino": "$2.50", "Apartment (Month)": "$600.00", "Beer": "$2.00" },
+    // Default Global Average
+    "DEFAULT": { "Lunch": "$10.00", "Cappuccino": "$3.00", "Apartment (Month)": "$1000.00", "Beer": "$3.00" }
+};
+
+export function getCountryCostFallback(countryCode: string) {
+    return countryCostIndex[countryCode] || countryCostIndex["DEFAULT"];
+}

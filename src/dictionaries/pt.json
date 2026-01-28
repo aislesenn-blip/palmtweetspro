@@ -1,1 +1,21 @@
-{ "weather": "Clima", "zip": "Código Postal", "compare": "Comparar" }
+{
+  "weather": "Tempo",
+  "distance": "Distância",
+  "visa": "Visto",
+  "cost": "Custo de Vida",
+  "logistics": "Logística",
+  "govt": "Governo",
+  "currency": "Moeda",
+  "population": "População",
+  "drive": "Conduzir",
+  "walk": "Caminhar",
+  "fly": "Voar",
+  "to": "para",
+  "from": "de",
+  "expect": "O que esperar",
+  "insights": "Informações Locais",
+  "unavailable": "Dados indisponíveis",
+  "check_embassy": "Verifique a Embaixada",
+  "nearest": "Mais próximo",
+  "select_month": "Selecione o Mês"
+}

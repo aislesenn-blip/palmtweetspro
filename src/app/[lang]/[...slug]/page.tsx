@@ -5,8 +5,30 @@ import SchemaMarkup from '@/components/SchemaMarkup';
 import Dashboard from '@/components/Dashboard';
 import HeroImage from '@/components/HeroImage';
 import { getDictionary } from '@/lib/dictionaries';
+import { locales } from '@/lib/navigation';
+import { Metadata } from 'next';
 
-// WikiSection component removed as it is now integrated into QuickFactsCard
+export async function generateMetadata({ params }: { params: { lang: string; slug: string[] } }): Promise<Metadata> {
+    const slugStr = params.slug.join('/');
+    const place = await getPlaceBySlug(slugStr);
+
+    // Hreflang Logic
+    const alternates: Record<string, string> = {};
+    locales.forEach(loc => {
+        alternates[loc] = `https://palmtweets.com/${loc}/${slugStr}`;
+    });
+    alternates['x-default'] = `https://palmtweets.com/en/${slugStr}`;
+
+    const displayName = place?.name || slugStr.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+    return {
+        title: `${displayName} - Global Location OS`,
+        description: `Everything about ${displayName}. Weather, Visa, Cost, and more.`,
+        alternates: {
+            languages: alternates,
+        },
+    };
+}
 
 export default async function Page({ params }: { params: { lang: string; slug: string[] } }) {
   const slugStr = params.slug.join('/');
@@ -46,7 +68,7 @@ export default async function Page({ params }: { params: { lang: string; slug: s
 
       <div className="mx-auto max-w-7xl px-6 -mt-8 relative z-10">
         {place ? (
-          <Dashboard initialPlace={place} dict={dict} />
+          <Dashboard initialPlace={place} dict={dict} lang={params.lang} />
         ) : (
           <div className="p-10 text-center bg-white rounded-3xl">Place not found.</div>
         )}

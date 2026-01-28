@@ -17,14 +17,17 @@ import TravelCard from './TravelCard';
 import FinancialCard from './FinancialCard';
 import AstronomyCard from './AstronomyCard';
 import ClimateCard from './ClimateCard';
+import DistanceCalculator from './DistanceCalculator';
+import WhatToExpectCard from './WhatToExpectCard';
 import { Place } from '@/lib/db';
 
 interface DashboardProps {
   initialPlace: Place;
   dict?: any;
+  lang?: string;
 }
 
-export default function Dashboard({ initialPlace, dict }: DashboardProps) {
+export default function Dashboard({ initialPlace, dict, lang = 'en' }: DashboardProps) {
   const [data, setData] = useState<any>({
     weather: null,
     time: null,
@@ -59,8 +62,8 @@ export default function Dashboard({ initialPlace, dict }: DashboardProps) {
         axios.get(`/api/modules/climate?lat=${lat}&lng=${lng}`),
         // 1. Travel (Airports, Metrics)
         axios.get(`/api/modules/travel?lat=${lat}&lng=${lng}`),
-        // 2. Cost (Teleport + Fallback)
-        axios.get(`/api/modules/cost?lat=${lat}&lng=${lng}`),
+        // 2. Cost (Teleport + Fallback) - Pass country name for fallback resolution
+        axios.get(`/api/modules/cost?lat=${lat}&lng=${lng}&countryName=${encodeURIComponent(country)}`),
         // 3. Logistics (Overpass Infrastructure)
         axios.get(`/api/modules/logistics?lat=${lat}&lng=${lng}`),
         // 4. Identity (RestCountries + Holidays)
@@ -85,7 +88,11 @@ export default function Dashboard({ initialPlace, dict }: DashboardProps) {
                    code: res.current.weather_code
                };
            }
-           newData.time = { timezone: res.timezone };
+           // Pass currentTime if available, else just timezone
+           newData.time = {
+               timezone: res.timezone,
+               currentTime: res.current?.time
+           };
            newData.climate = res.forecast; // Daily forecast
            newData.climateNormals = res.normals;
         }
@@ -139,20 +146,44 @@ export default function Dashboard({ initialPlace, dict }: DashboardProps) {
     return () => { mounted = false; };
   }, [initialPlace]);
 
+  // Derive simple cost level for Vibe Check
+  const getCostLevel = (costData: any) => {
+      if (!costData || !costData.costs) return "Medium";
+      const lunch = parseFloat(costData.costs["Lunch"]?.replace('$','') || '0');
+      if (lunch > 15) return "High";
+      if (lunch > 25) return "Very High";
+      if (lunch < 8) return "Low";
+      return "Medium";
+  };
+
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Quick Facts (Top) */}
         <div className="lg:col-span-3">
             <QuickFactsCard
                 name={initialPlace.name}
-                country={initialPlace.country}
+                country={initialPlace.country} // Keep original name for API lookups
+                countryCode={data.identity?.cca2} // Pass code for translation
+                lang={lang} // Pass lang for formatting
                 lat={initialPlace.latitude}
                 lng={initialPlace.longitude}
                 initialCurrency={data.currency?.currencies}
                 initialIdd={data.telecom?.idd}
-                initialWeatherTime={data.time?.timezone}
+                initialWeatherTime={data.time?.currentTime}
                 loading={loading}
             />
+        </div>
+
+        {/* Vibe Check (New) */}
+        <div className="lg:col-span-3">
+             <WhatToExpectCard
+                cityName={initialPlace.name}
+                population={data.identity?.population}
+                costLevel={getCostLevel(data.cost)}
+                language={data.identity?.languages ? Object.values(data.identity.languages)[0] as string : undefined}
+                temp={data.weather?.temp}
+                loading={loading}
+             />
         </div>
 
         <WeatherCard data={data.weather} loading={loading} />
@@ -161,6 +192,7 @@ export default function Dashboard({ initialPlace, dict }: DashboardProps) {
 
         <TelecomCard data={data.telecom} loading={loading} />
         <CurrencyCard data={data.currency} rates={data.rates} loading={loading} />
+
         <LogisticsCard
             lat={initialPlace.latitude}
             lng={initialPlace.longitude}
@@ -172,11 +204,12 @@ export default function Dashboard({ initialPlace, dict }: DashboardProps) {
         />
 
         <GovernmentCard
-            countryCode={data.identity?.cca2 || 'Unknown'} // Identity has cca2
+            countryCode={data.identity?.cca2 || 'Unknown'}
             visa={data.government?.visa}
             driving={data.government?.driving}
             loading={loading}
         />
+
         <TravelCard
             airports={data.airports}
             metrics={data.travelMetrics}
@@ -184,9 +217,20 @@ export default function Dashboard({ initialPlace, dict }: DashboardProps) {
             countryName={initialPlace.country}
             loading={loading}
         />
+
+        {/* Distance Calculator (New) */}
+        <div className="lg:col-span-2">
+           <DistanceCalculator
+               currentCity={initialPlace.name}
+               currentLat={initialPlace.latitude}
+               currentLng={initialPlace.longitude}
+           />
+        </div>
+
         <AstronomyCard lat={initialPlace.latitude} lng={initialPlace.longitude} loading={loading} />
 
         <FinancialCard details={data.cost} countryCode={data.identity?.cca2 || 'XX'} loading={loading} />
+
         <ClimateCard
             forecast={data.climate}
             normals={data.climateNormals}

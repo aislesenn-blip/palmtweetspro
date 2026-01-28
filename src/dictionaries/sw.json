@@ -1,1 +1,21 @@
-{ "weather": "Hali ya Hewa", "zip": "Msimbo wa Posta", "compare": "Linganisha" }
+{
+  "weather": "Hali ya Hewa",
+  "distance": "Umbali",
+  "visa": "Viza",
+  "cost": "Gharama za Maisha",
+  "logistics": "Usafirishaji",
+  "govt": "Serikali",
+  "currency": "Sarafu",
+  "population": "Idadi ya Watu",
+  "drive": "Endesha",
+  "walk": "Tembea",
+  "fly": "Paa",
+  "to": "kwenda",
+  "from": "kutoka",
+  "expect": "Nini cha Kutarajia",
+  "insights": "Maelezo ya Ndani",
+  "unavailable": "Data Haipatikani",
+  "check_embassy": "Angalia Ubalozi",
+  "nearest": "Karibu zaidi",
+  "select_month": "Chagua Mwezi"
+}

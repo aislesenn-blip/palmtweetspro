@@ -7,6 +7,8 @@ import SkeletonLoader from './SkeletonLoader';
 interface QuickFactsCardProps {
   name: string;
   country: string;
+  countryCode?: string; // ISO 2 (cca2)
+  lang?: string;
   lat: number;
   lng: number;
   initialWeatherTime?: string;
@@ -18,6 +20,8 @@ interface QuickFactsCardProps {
 export default function QuickFactsCard({
   name,
   country,
+  countryCode,
+  lang = 'en',
   lat,
   lng,
   initialWeatherTime,
@@ -30,14 +34,17 @@ export default function QuickFactsCard({
   const [countryDetails, setCountryDetails] = useState<{ currency: string; dialCode: string } | undefined>(undefined);
   const [timeString, setTimeString] = useState<string | undefined>(undefined);
 
-  // 1. Fetch Wikipedia Data
+  // 1. Fetch Wikipedia Data (Could be localized if wiki supports it, sticking to EN for now or mapping)
   useEffect(() => {
     let mounted = true;
 
     // Reset wiki data when name changes
     setWikiData(undefined);
 
-    axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${name}`)
+    // TODO: Use lang-specific wikipedia subdomain (e.g., fr.wikipedia.org) if desired
+    const wikiLang = ['en', 'fr', 'es', 'de', 'ru', 'zh', 'ja'].includes(lang) ? lang : 'en';
+
+    axios.get(`https://${wikiLang}.wikipedia.org/api/rest_v1/page/summary/${name}`)
       .then((res) => {
         if (mounted && res.data) {
           setWikiData({
@@ -47,12 +54,24 @@ export default function QuickFactsCard({
         }
       })
       .catch((e) => {
-        // Ignore wiki errors, set as null (loaded but empty)
-        if (mounted) setWikiData(null);
+        // Fallback to English if localized fails
+        if (lang !== 'en') {
+             axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${name}`)
+             .then((res) => {
+                if (mounted && res.data) {
+                    setWikiData({
+                        extract: res.data.extract,
+                        url: res.data.content_urls?.desktop?.page
+                    });
+                }
+             }).catch(() => { if (mounted) setWikiData(null); });
+        } else {
+             if (mounted) setWikiData(null);
+        }
       });
 
     return () => { mounted = false; };
-  }, [name]);
+  }, [name, lang]);
 
   // 2. Determine Country Data (Currency & IDD)
   useEffect(() => {
@@ -79,8 +98,6 @@ export default function QuickFactsCard({
         setCountryDetails(formatData(initialCurrency, initialIdd));
     } else if (!parentLoading) {
         // Only fetch if data is missing AND parent is NOT loading
-        // If parent is loading, we wait (stay undefined)
-
         axios.get(`https://restcountries.com/v3.1/name/${country}?fields=currencies,idd`)
             .then((res) => {
                 if (mounted && res.data && res.data.length > 0) {
@@ -105,7 +122,7 @@ export default function QuickFactsCard({
       if (initialWeatherTime) {
           const date = new Date(initialWeatherTime);
           if (!isNaN(date.getTime())) {
-              setTimeString(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+              setTimeString(date.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' }));
           } else {
               setTimeString(initialWeatherTime);
           }
@@ -115,7 +132,7 @@ export default function QuickFactsCard({
              .then((res) => {
                  if (mounted && res.data?.current?.time) {
                      const date = new Date(res.data.current.time);
-                     setTimeString(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+                     setTimeString(date.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' }));
                  } else {
                      if (mounted) setTimeString("Unknown Time");
                  }
@@ -126,19 +143,29 @@ export default function QuickFactsCard({
       }
 
       return () => { mounted = false; };
-  }, [lat, lng, initialWeatherTime]);
+  }, [lat, lng, initialWeatherTime, lang]);
 
 
   // Derived Loading State
-  // We are loading if any critical data is undefined
   const isLoading = wikiData === undefined || countryDetails === undefined || timeString === undefined;
 
   if (isLoading) {
       return <SkeletonLoader className="h-48 w-full mb-8" />;
   }
 
+  // Internationalization of Names
+  let displayCountry = country;
+  try {
+      if (countryCode) {
+          const regionNames = new Intl.DisplayNames([lang], { type: 'region' });
+          displayCountry = regionNames.of(countryCode) || country;
+      }
+  } catch (e) {
+      // Fallback
+  }
+
   // Construct Summary
-  const summary = `${name} is a key location in ${country}. The local dial code is ${countryDetails?.dialCode}, and the currency used is ${countryDetails?.currency}. Current time: ${timeString}.`;
+  const summary = `${name} is a key location in ${displayCountry}. The local dial code is ${countryDetails?.dialCode}, and the currency used is ${countryDetails?.currency}. Current time: ${timeString}.`;
 
   return (
     <div className="mb-8 rounded-3xl bg-blue-50 p-6 shadow-sm border border-blue-100">

@@ -1,0 +1,21 @@
+{
+  "weather": "Météo",
+  "distance": "Distance",
+  "visa": "Visa",
+  "cost": "Coût de la vie",
+  "logistics": "Logistique",
+  "govt": "Gouvernement",
+  "currency": "Devise",
+  "population": "Population",
+  "drive": "Conduire",
+  "walk": "Marcher",
+  "fly": "Voler",
+  "to": "vers",
+  "from": "de",
+  "expect": "À quoi s'attendre",
+  "insights": "Aperçu local",
+  "unavailable": "Données indisponibles",
+  "check_embassy": "Consulter l'ambassade",
+  "nearest": "Le plus proche",
+  "select_month": "Sélectionner un mois"
+}

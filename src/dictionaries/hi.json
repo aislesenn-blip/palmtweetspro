@@ -1,0 +1,21 @@
+{
+  "weather": "मौसम",
+  "distance": "दूरी",
+  "visa": "वीज़ा",
+  "cost": "रहने का खर्च",
+  "logistics": "रसद",
+  "govt": "सरकार",
+  "currency": "मुद्रा",
+  "population": "जनसंख्या",
+  "drive": "ड्राइव",
+  "walk": "चलना",
+  "fly": "उड़ान",
+  "to": "को",
+  "from": "से",
+  "expect": "क्या उम्मीद करें",
+  "insights": "स्थानीय जानकारी",
+  "unavailable": "डेटा अनुपलब्ध",
+  "check_embassy": "दूतावास की जाँच करें",
+  "nearest": "निकटतम",
+  "select_month": "महीना चुनें"
+}
