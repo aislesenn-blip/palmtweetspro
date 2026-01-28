@@ -42,10 +42,16 @@ export default function GovernmentCard({ countryCode, visa, driving, carSide, lo
       { id: 'tourist', label: 'Tourist', icon: Stamp },
       { id: 'business', label: 'Business', icon: Briefcase },
       { id: 'student', label: 'Student', icon: GraduationCap },
-      { id: 'work', label: 'Work', icon: Briefcase }, // Re-using briefcase for work
+      { id: 'work', label: 'Work', icon: Briefcase },
       { id: 'transit', label: 'Transit', icon: Plane },
       { id: 'volunteer', label: 'Volunteer', icon: Heart },
   ];
+
+  const getModalContent = () => {
+      if (!isVisaObject) return "Information unavailable.";
+      const detail = (visa as VisaDetails)[activeTab];
+      return detail || "Specific requirements unavailable. Please check with the embassy.";
+  };
 
   return (
     <>
@@ -154,7 +160,7 @@ export default function GovernmentCard({ countryCode, visa, driving, carSide, lo
                 <div className="p-6 min-h-[200px] flex items-center justify-center text-center">
                     <div>
                          <p className="text-xl font-bold text-gray-900 mb-2">
-                             {(visa as VisaDetails)[activeTab]}
+                             {getModalContent()}
                          </p>
                          <p className="text-sm text-gray-500">
                              Requirements for {activeTab} travelers. Always verify with the official embassy before booking.
