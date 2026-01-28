@@ -33,8 +33,6 @@ export default function HeroImage({ query, fallbackQuery }: HeroImageProps) {
             return;
         }
 
-        // Use fetch instead of axios to be consistent with rest of app updates (though client-side axios is fine)
-        // Sticking to axios as it is already imported and working for client.
         const response = await axios.get(`https://api.unsplash.com/search/photos`, {
           params: { query: searchQuery, orientation: 'landscape', per_page: 1 },
           headers: { Authorization: `Client-ID ${accessKey}` }
@@ -45,14 +43,19 @@ export default function HeroImage({ query, fallbackQuery }: HeroImageProps) {
           const results = response.data?.results;
           if (Array.isArray(results) && results.length > 0) {
             const firstResult = results[0];
+
+            // Extract URL strings specifically
             const regular = firstResult?.urls?.regular;
             const small = firstResult?.urls?.small;
 
-            // Prioritize regular, fallback to small, ensure STRING
+            // STRICT CHECK: Only set if it is strictly a string
             const validUrl = (typeof regular === 'string' && regular) || (typeof small === 'string' && small) || null;
 
             if (validUrl) {
                  setBgImageUrl(validUrl);
+            } else {
+                 // Warn but don't crash
+                 console.warn("Unsplash: Result found but URLs invalid");
             }
 
             setLoading(false);
@@ -81,7 +84,7 @@ export default function HeroImage({ query, fallbackQuery }: HeroImageProps) {
 
   return (
     <div className={`relative h-[400px] w-full overflow-hidden ${!bgImageUrl ? fallbackClass : 'bg-gray-900'}`}>
-      {bgImageUrl && (
+      {bgImageUrl && typeof bgImageUrl === 'string' && (
         <img
           src={bgImageUrl}
           alt={safeAlt}
