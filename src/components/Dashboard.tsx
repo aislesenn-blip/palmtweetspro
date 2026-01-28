@@ -178,6 +178,7 @@ export default function Dashboard({ initialPlace, dict }: DashboardProps) {
                 initialCurrency={data.currency?.currencies}
                 initialIdd={data.telecom?.idd}
                 initialWeatherTime={data.time?.timezone}
+                loading={loading}
             />
         </div>
 
