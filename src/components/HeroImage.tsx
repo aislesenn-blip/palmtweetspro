@@ -9,7 +9,8 @@ interface HeroImageProps {
 }
 
 export default function HeroImage({ query, fallbackQuery }: HeroImageProps) {
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  // Rename state to be extremely clear it's a URL string
+  const [bgImageUrl, setBgImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fallback gradient (Production safe)
@@ -22,36 +23,38 @@ export default function HeroImage({ query, fallbackQuery }: HeroImageProps) {
       try {
         const accessKey = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY;
 
-        // Environment Check - Fail gracefully if missing
         if (!accessKey) {
-            console.warn("Unsplash: Key Missing - Rendering fallback.");
             if (mounted) setLoading(false);
             return;
         }
 
-        // Sanity check query
         if (!searchQuery || typeof searchQuery !== 'string') {
             if (mounted) setLoading(false);
             return;
         }
 
+        // Use fetch instead of axios to be consistent with rest of app updates (though client-side axios is fine)
+        // Sticking to axios as it is already imported and working for client.
         const response = await axios.get(`https://api.unsplash.com/search/photos`, {
           params: { query: searchQuery, orientation: 'landscape', per_page: 1 },
           headers: { Authorization: `Client-ID ${accessKey}` }
         });
 
         if (mounted) {
+          // Extra defensive extraction
           const results = response.data?.results;
           if (Array.isArray(results) && results.length > 0) {
-            const firstImage = results[0];
-            const regularUrl = firstImage?.urls?.regular;
+            const firstResult = results[0];
+            const regular = firstResult?.urls?.regular;
+            const small = firstResult?.urls?.small;
 
-            // STRICT CHECK: Only set if it is strictly a string
-            if (typeof regularUrl === 'string') {
-                 setImageSrc(regularUrl);
-            } else {
-                 console.warn("Unsplash: Image found but URL is invalid/missing.");
+            // Prioritize regular, fallback to small, ensure STRING
+            const validUrl = (typeof regular === 'string' && regular) || (typeof small === 'string' && small) || null;
+
+            if (validUrl) {
+                 setBgImageUrl(validUrl);
             }
+
             setLoading(false);
           } else if (!isFallback && fallbackQuery) {
             fetchImage(fallbackQuery, true);
@@ -60,8 +63,7 @@ export default function HeroImage({ query, fallbackQuery }: HeroImageProps) {
           }
         }
       } catch (e: any) {
-        // ERROR TRAP: Never let fetch errors crash the UI
-        console.warn("Unsplash Fetch Error (handled):", e.message);
+        console.warn("Unsplash handled error");
         if (mounted) setLoading(false);
       }
     }
@@ -75,14 +77,16 @@ export default function HeroImage({ query, fallbackQuery }: HeroImageProps) {
     return () => { mounted = false; };
   }, [query, fallbackQuery]);
 
+  const safeAlt = typeof query === 'string' ? `${query} travel` : 'Travel destination';
+
   return (
-    <div className={`relative h-[400px] w-full overflow-hidden ${!imageSrc ? fallbackClass : 'bg-gray-900'}`}>
-      {imageSrc && typeof imageSrc === 'string' && (
+    <div className={`relative h-[400px] w-full overflow-hidden ${!bgImageUrl ? fallbackClass : 'bg-gray-900'}`}>
+      {bgImageUrl && (
         <img
-          src={imageSrc}
-          alt={typeof query === 'string' ? `${query} travel` : 'Travel destination'}
+          src={bgImageUrl}
+          alt={safeAlt}
           className={`h-full w-full object-cover transition-opacity duration-700 ${loading ? 'opacity-0' : 'opacity-60'}`}
-          onError={() => setImageSrc(null)} // Handle broken image links
+          onError={() => setBgImageUrl(null)}
         />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
