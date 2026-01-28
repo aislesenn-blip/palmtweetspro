@@ -8,7 +8,7 @@ interface ClimateCardProps {
   cityName?: string;
   forecast?: { time: string[]; temperature_2m_max: number[]; temperature_2m_min: number[] } | null;
   daily?: any;
-  normals?: { avgTemp: string; monthlyPrecip: string }[] | { avgTemp: string; monthlyPrecip: string } | null; // Support Array or Legacy Object
+  normals?: { avgTemp: string; monthlyPrecip: string }[] | { avgTemp: string; monthlyPrecip: string } | null;
   loading?: boolean;
 }
 
@@ -21,14 +21,16 @@ export default function ClimateCard({ cityName, forecast, daily, normals, loadin
 
   const effectiveForecast = forecast || daily;
 
-  // Normalize normals to array if legacy object (though API now returns array, need safety)
+  // Normalize normals to array
   const normalsArray = Array.isArray(normals) ? normals : (normals ? [normals] : null);
 
   // Logic to handle if we only have 1 normals object vs 12
   const currentNormal = normalsArray ? (normalsArray.length > 1 ? normalsArray[selectedMonth] : normalsArray[0]) : null;
 
-  const avgTemp = currentNormal ? parseFloat(currentNormal.avgTemp) : null;
-  const precip = currentNormal ? parseFloat(currentNormal.monthlyPrecip) : null;
+  const avgTemp = currentNormal?.avgTemp ? parseFloat(currentNormal.avgTemp) : null;
+  const precip = currentNormal?.monthlyPrecip ? parseFloat(currentNormal.monthlyPrecip) : null;
+
+  const isValidData = avgTemp !== null && !isNaN(avgTemp) && precip !== null && !isNaN(precip);
 
   // Insight Logic
   const generateInsight = (temp: number, rain: number) => {
@@ -51,7 +53,7 @@ export default function ClimateCard({ cityName, forecast, daily, normals, loadin
       return { feeling, activity };
   };
 
-  const insight = (avgTemp !== null && precip !== null) ? generateInsight(avgTemp, precip) : null;
+  const insight = isValidData ? generateInsight(avgTemp!, precip!) : null;
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   return (
@@ -78,7 +80,7 @@ export default function ClimateCard({ cityName, forecast, daily, normals, loadin
 
       <div className="space-y-6">
          {/* Normals Insight */}
-         {currentNormal && insight ? (
+         {isValidData && insight ? (
              <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 transition-all duration-300">
                 <div className="flex justify-between items-start mb-2">
                     <div>
@@ -100,8 +102,7 @@ export default function ClimateCard({ cityName, forecast, daily, normals, loadin
              </div>
          )}
 
-         {/* Forecast (Only show if current month is selected? No, forecast is always next 7 days.
-             Maybe label it distinctively) */}
+         {/* Forecast */}
          <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Upcoming 7 Days</p>
             {effectiveForecast ? (

@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { fetchWithCache } from '@/lib/kv';
 import { getVisaInfo } from '@/lib/visaData';
 import { getDrivingRules } from '@/lib/drivingData';
-import axios from 'axios';
 
 const GOV_TTL = 60 * 60 * 24 * 7; // 7 Days
 
@@ -15,39 +13,31 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing country code or name' }, { status: 400 });
   }
 
-  // Cache key depends on what we have. Prefer cca2 if possible, but for name we need a unique key.
-  const cacheKey = `government_v2:${cca2Param || countryParam}`;
+  let code = cca2Param;
 
-  const data = await fetchWithCache(
-      cacheKey,
-      async () => {
-          let code = cca2Param;
-
-          // If we only have name, resolve to Code first
-          if (!code && countryParam) {
-              try {
-                  const res = await axios.get(`https://restcountries.com/v3.1/name/${countryParam}?fields=cca2`);
-                  if (res.data && res.data.length > 0) {
-                      code = res.data[0].cca2;
-                  }
-              } catch (e) {
-                  console.warn("Gov: Failed to resolve country code");
+  // If we only have name, resolve to Code first
+  if (!code && countryParam) {
+      try {
+          const res = await fetch(`https://restcountries.com/v3.1/name/${countryParam}?fields=cca2`, { next: { revalidate: GOV_TTL } });
+          if (res.ok) {
+              const data = await res.json();
+              if (data && data.length > 0) {
+                  code = data[0].cca2;
               }
           }
+      } catch (e) {
+          console.warn("Gov: Failed to resolve country code");
+      }
+  }
 
-          if (!code) return { visa: null, driving: null };
+  if (!code) return NextResponse.json({ visa: null, driving: null });
 
-          const visa = getVisaInfo(code); // Now returns object
-          const driving = getDrivingRules(code);
+  const visa = getVisaInfo(code);
+  const driving = getDrivingRules(code);
 
-          return {
-              visa,
-              driving,
-              cca2: code
-          };
-      },
-      { ttlSeconds: GOV_TTL }
-  );
-
-  return NextResponse.json(data);
+  return NextResponse.json({
+      visa,
+      driving,
+      cca2: code
+  });
 }
