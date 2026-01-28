@@ -73,8 +73,7 @@ async function runBenchmark() {
          const locRes = await fetch(`https://api.teleport.org/api/locations/0,0/`);
          // @ts-ignore
          if (locRes.ok) {
-            // @ts-ignore
-            const locData = await locRes.json();
+            const locData: any = await locRes.json();
             const uaUrl = locData?._embedded?.['location:nearest-urban-areas']?.[0]?.['_links']?.['location:nearest-urban-area']?.href;
             if (uaUrl) {
                 const detailsRes = await fetch(`${uaUrl}details/`);
@@ -105,8 +104,7 @@ async function runBenchmark() {
          const locRes = await fetch(`https://api.teleport.org/api/locations/0,0/?embed=location:nearest-urban-areas/location:nearest-urban-area/ua:details`);
          // @ts-ignore
          if (locRes.ok) {
-             // @ts-ignore
-             const locData = await locRes.json();
+             const locData: any = await locRes.json();
              const nearestUrbanArea = locData?._embedded?.['location:nearest-urban-areas']?.[0];
              const uaUrl = nearestUrbanArea?.['_links']?.['location:nearest-urban-area']?.href;
              let detailsData = nearestUrbanArea?.['_embedded']?.['location:nearest-urban-area']?.['_embedded']?.['ua:details'];
