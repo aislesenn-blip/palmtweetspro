@@ -25,15 +25,21 @@ export async function GET(request: Request) {
     // Note: Teleport API is HATEOAS based, heavily linked.
     // Fetching with strict Next.js caching might be tricky if URLs change, but locations endpoints are stable.
 
-    const locRes = await fetch(`https://api.teleport.org/api/locations/${latitude},${longitude}/`, { next: { revalidate: COST_TTL } });
+    const locRes = await fetch(`https://api.teleport.org/api/locations/${latitude},${longitude}/?embed=location:nearest-urban-areas/location:nearest-urban-area/ua:details`, { next: { revalidate: COST_TTL } });
     if (locRes.ok) {
         const locData = await locRes.json();
-        const uaUrl = locData?._embedded?.['location:nearest-urban-areas']?.[0]?.['_links']?.['location:nearest-urban-area']?.href;
+        const nearestUrbanArea = locData?._embedded?.['location:nearest-urban-areas']?.[0];
+        const uaUrl = nearestUrbanArea?.['_links']?.['location:nearest-urban-area']?.href;
+        let detailsData = nearestUrbanArea?.['_embedded']?.['location:nearest-urban-area']?.['_embedded']?.['ua:details'];
 
-        if (uaUrl) {
-            const detailsRes = await fetch(`${uaUrl}details/`, { next: { revalidate: COST_TTL } });
-            if (detailsRes.ok) {
-                const detailsData = await detailsRes.json();
+        if (!detailsData && uaUrl) {
+             const detailsRes = await fetch(`${uaUrl}details/`, { next: { revalidate: COST_TTL } });
+             if (detailsRes.ok) {
+                 detailsData = await detailsRes.json();
+             }
+        }
+
+        if (detailsData) {
                 const categories = detailsData.categories;
 
                 const findCost = (catId: string, itemId: string) => {
@@ -54,7 +60,6 @@ export async function GET(request: Request) {
                 }
             }
         }
-    }
   } catch (e) {
       console.warn("Teleport Fetch Error", e);
   }
