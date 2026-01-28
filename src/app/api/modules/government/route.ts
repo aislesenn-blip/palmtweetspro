@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   // If we only have name, resolve to Code first
   if (!code && countryParam) {
       try {
-          const res = await fetch(`https://restcountries.com/v3.1/name/${countryParam}?fields=cca2`, { next: { revalidate: GOV_TTL } });
+          const res = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(countryParam)}?fields=cca2`, { next: { revalidate: GOV_TTL } });
           if (res.ok) {
               const data = await res.json();
               if (data && data.length > 0) {

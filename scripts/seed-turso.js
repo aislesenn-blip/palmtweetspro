@@ -56,14 +56,40 @@ function cleanupTempDir() {
   }
 }
 
+// --- Country/Continent Map ---
+async function getContinentMap() {
+  console.log('Fetching countryInfo.txt for continent mapping...');
+  const url = `${GEONAMES_BASE_URL}countryInfo.txt`;
+  const filePath = path.join(TEMP_DIR, 'countryInfo.txt');
+
+  await downloadFile(url, filePath);
+
+  const map = new Map(); // CountryCode -> ContinentCode
+
+  const fileStream = fs.createReadStream(filePath);
+  const rl = readline.createInterface({
+      input: fileStream,
+      crlfDelay: Infinity
+  });
+
+  for await (const line of rl) {
+      if (line.startsWith('#')) continue;
+      const cols = line.split('\t');
+      // ISO(0), ISO3(1), ISO-Numeric(2), fips(3), Country(4), Capital(5), Area(6), Population(7), Continent(8)
+      if (cols.length > 8) {
+          map.set(cols[0], cols[8]);
+      }
+  }
+
+  return map;
+}
+
 // --- Schema Setup ---
 async function setupSchema() {
   console.log('Setting up schema...');
   const schemaPath = path.join(__dirname, 'schema.sql');
   const schemaSql = fs.readFileSync(schemaPath, 'utf8');
 
-  // Split by semicolon to execute statements individually (LibSQL client usually takes one statement or a batch)
-  // For schema setup, we can use batch but execute multiple is also fine.
   const statements = schemaSql.split(';').map(s => s.trim()).filter(s => s.length > 0);
 
   for (const stmt of statements) {
@@ -78,10 +104,16 @@ async function setupSchema() {
 }
 
 // --- Ingestion Logic: Locations ---
-async function ingestLocations(countryFilter) {
-  const fileName = 'allCountries.zip'; // Or specific country like US.zip if implemented later
+async function ingestLocations(filterCode, filterType) {
+  const fileName = 'allCountries.zip';
   const url = `${GEONAMES_BASE_URL}${fileName}`;
   const zipPath = path.join(TEMP_DIR, fileName);
+
+  // If filtering by continent, we need the map first
+  let continentMap = null;
+  if (filterType === 'continent') {
+      continentMap = await getContinentMap();
+  }
 
   await downloadFile(url, zipPath);
 
@@ -94,12 +126,10 @@ async function ingestLocations(countryFilter) {
     throw new Error('No .txt file found in zip');
   }
 
-  // Extract to stream processing
-  // AdmZip extracting to disk is easier for readline
   zip.extractEntryTo(textEntry, TEMP_DIR, false, true);
   const txtPath = path.join(TEMP_DIR, textEntry.name);
 
-  console.log('Processing lines...');
+  console.log(`Processing lines (Filter: ${filterType}=${filterCode || 'ALL'})...`);
   const fileStream = fs.createReadStream(txtPath);
   const rl = readline.createInterface({
     input: fileStream,
@@ -111,10 +141,17 @@ async function ingestLocations(countryFilter) {
 
   for await (const line of rl) {
     const cols = line.split('\t');
-    // geonameid, name, asciiname, alternatenames, latitude, longitude, feature class, feature code, country code, cc2, admin1 code, admin2 code, admin3 code, admin4 code, population, elevation, dem, timezone, modification date
-
     const countryCode = cols[8];
-    if (countryFilter && countryCode !== countryFilter) continue;
+
+    // Filtering Logic
+    if (filterCode) {
+        if (filterType === 'country') {
+            if (countryCode !== filterCode) continue;
+        } else if (filterType === 'continent') {
+            const continent = continentMap.get(countryCode);
+            if (continent !== filterCode) continue;
+        }
+    }
 
     const row = {
       geoname_id: parseInt(cols[0]),
@@ -154,18 +191,22 @@ async function ingestLocations(countryFilter) {
 }
 
 // --- Ingestion Logic: Postcodes ---
-async function ingestPostcodes(countryFilter) {
-  const fileName = 'allCountries.zip'; // Note: GeoNames uses the SAME filename for postal codes usually inside zip directory 'zip' or distinct?
-  // Actually GeoNames has a separate dump for zipcodes: https://download.geonames.org/export/zip/allCountries.zip
+async function ingestPostcodes(filterCode, filterType) {
+  const fileName = 'allCountries.zip';
   const url = `https://download.geonames.org/export/zip/${fileName}`;
   const zipPath = path.join(TEMP_DIR, `postcodes_${fileName}`);
+
+  let continentMap = null;
+  if (filterType === 'continent') {
+      continentMap = await getContinentMap();
+  }
 
   await downloadFile(url, zipPath);
 
   console.log('Unzipping...');
   const zip = new AdmZip(zipPath);
   const zipEntries = zip.getEntries();
-  const textEntry = zipEntries.find(entry => entry.entryName.endsWith('.txt')); // Usually allCountries.txt
+  const textEntry = zipEntries.find(entry => entry.entryName.endsWith('.txt'));
 
   if (!textEntry) {
     throw new Error('No .txt file found in zip');
@@ -174,7 +215,7 @@ async function ingestPostcodes(countryFilter) {
   zip.extractEntryTo(textEntry, TEMP_DIR, false, true);
   const txtPath = path.join(TEMP_DIR, textEntry.name);
 
-  console.log('Processing lines...');
+  console.log(`Processing lines (Filter: ${filterType}=${filterCode || 'ALL'})...`);
   const fileStream = fs.createReadStream(txtPath);
   const rl = readline.createInterface({
     input: fileStream,
@@ -186,10 +227,17 @@ async function ingestPostcodes(countryFilter) {
 
   for await (const line of rl) {
     const cols = line.split('\t');
-    // country code, postal code, place name, admin name1, admin code1, admin name2, admin code2, admin name3, admin code3, latitude, longitude, accuracy
-
     const countryCode = cols[0];
-    if (countryFilter && countryCode !== countryFilter) continue;
+
+    // Filtering Logic
+    if (filterCode) {
+        if (filterType === 'country') {
+            if (countryCode !== filterCode) continue;
+        } else if (filterType === 'continent') {
+            const continent = continentMap.get(countryCode);
+            if (continent !== filterCode) continue;
+        }
+    }
 
     const row = {
         country_code: countryCode,
@@ -226,7 +274,8 @@ async function ingestPostcodes(countryFilter) {
 async function main() {
   const args = process.argv.slice(2);
   const dataset = args[0]; // 'locations' or 'postcodes'
-  const countryFilter = args[1]; // Optional 'US', 'GB', etc.
+  const filterCode = args[1]; // 'US', 'GB', 'AF', etc.
+  const filterType = args[2] || 'country'; // 'country' or 'continent'
 
   ensureTempDir();
 
@@ -234,9 +283,9 @@ async function main() {
       await setupSchema();
 
       if (dataset === 'locations') {
-          await ingestLocations(countryFilter);
+          await ingestLocations(filterCode, filterType);
       } else if (dataset === 'postcodes') {
-          await ingestPostcodes(countryFilter);
+          await ingestPostcodes(filterCode, filterType);
       } else {
           console.log('Please specify dataset: "locations" or "postcodes"');
       }

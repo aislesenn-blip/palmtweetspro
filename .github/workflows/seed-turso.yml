@@ -11,10 +11,18 @@ on:
         options:
         - locations
         - postcodes
-      country_code:
-        description: 'Country Code Filter (e.g. US, GB) - Optional'
+      filter_code:
+        description: 'Filter Code (e.g. US, AF, EU)'
         required: false
         default: ''
+      filter_type:
+        description: 'Filter Type'
+        required: true
+        default: 'country'
+        type: choice
+        options:
+        - country
+        - continent
 
 jobs:
   ingest:
@@ -37,4 +45,4 @@ jobs:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
-          node scripts/seed-turso.js ${{ inputs.dataset }} ${{ inputs.country_code }}
+          node scripts/seed-turso.js ${{ inputs.dataset }} ${{ inputs.filter_code }} ${{ inputs.filter_type }}

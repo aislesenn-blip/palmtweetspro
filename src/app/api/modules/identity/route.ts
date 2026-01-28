@@ -12,7 +12,7 @@ export async function GET(request: Request) {
 
   try {
       // 1. RestCountries
-      const res = await fetch(`https://restcountries.com/v3.1/name/${country}?fields=name,cca2,population,currencies,languages,idd,flags`, { next: { revalidate: IDENTITY_TTL } });
+      const res = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(country)}?fields=name,cca2,population,currencies,languages,idd,flags`, { next: { revalidate: IDENTITY_TTL } });
 
       if (!res.ok) {
           return NextResponse.json({ error: 'Country not found' }, { status: 404 });
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       // Merge
       return NextResponse.json({
           ...countryData,
-          holidays: holidays.slice(0, 3) // Return top 3 next holidays? Or all? Just returning list.
+          holidays: holidays.slice(0, 3)
       });
 
   } catch (e) {
