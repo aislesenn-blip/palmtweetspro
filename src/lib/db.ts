@@ -20,9 +20,14 @@ export interface Place {
   description?: string;
 }
 
+let initPromise: Promise<void> | null = null;
+
 export async function initDB() {
-  try {
-    await db.execute(`
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
+    try {
+      await db.execute(`
       CREATE TABLE IF NOT EXISTS places (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         slug TEXT UNIQUE,
@@ -33,9 +38,14 @@ export async function initDB() {
         description TEXT
       );
     `);
-  } catch (e) {
-    console.error("Failed to init DB:", e);
-  }
+    } catch (e) {
+      console.error("Failed to init DB:", e);
+      initPromise = null; // Allow retrying if initialization fails
+      throw e;
+    }
+  })();
+
+  return initPromise;
 }
 
 async function fetchLocationFromAPI(slug: string): Promise<Omit<Place, 'id'> | null> {
