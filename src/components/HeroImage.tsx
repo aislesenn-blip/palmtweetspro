@@ -9,7 +9,7 @@ interface HeroImageProps {
 }
 
 export default function HeroImage({ query, fallbackQuery }: HeroImageProps) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fallback gradient (Production safe)
@@ -41,12 +41,16 @@ export default function HeroImage({ query, fallbackQuery }: HeroImageProps) {
         });
 
         if (mounted) {
-          if (response.data && Array.isArray(response.data.results) && response.data.results.length > 0) {
-            const url = response.data.results[0]?.urls?.regular;
-            if (typeof url === 'string') {
-                 setImageUrl(url);
+          const results = response.data?.results;
+          if (Array.isArray(results) && results.length > 0) {
+            const firstImage = results[0];
+            const regularUrl = firstImage?.urls?.regular;
+
+            // STRICT CHECK: Only set if it is strictly a string
+            if (typeof regularUrl === 'string') {
+                 setImageSrc(regularUrl);
             } else {
-                 throw new Error("Invalid image URL format");
+                 console.warn("Unsplash: Image found but URL is invalid/missing.");
             }
             setLoading(false);
           } else if (!isFallback && fallbackQuery) {
@@ -72,13 +76,13 @@ export default function HeroImage({ query, fallbackQuery }: HeroImageProps) {
   }, [query, fallbackQuery]);
 
   return (
-    <div className={`relative h-[400px] w-full overflow-hidden ${!imageUrl ? fallbackClass : 'bg-gray-900'}`}>
-      {imageUrl && typeof imageUrl === 'string' && (
+    <div className={`relative h-[400px] w-full overflow-hidden ${!imageSrc ? fallbackClass : 'bg-gray-900'}`}>
+      {imageSrc && typeof imageSrc === 'string' && (
         <img
-          src={imageUrl}
+          src={imageSrc}
           alt={typeof query === 'string' ? `${query} travel` : 'Travel destination'}
           className={`h-full w-full object-cover transition-opacity duration-700 ${loading ? 'opacity-0' : 'opacity-60'}`}
-          onError={() => setImageUrl(null)} // Handle broken image links
+          onError={() => setImageSrc(null)} // Handle broken image links
         />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
