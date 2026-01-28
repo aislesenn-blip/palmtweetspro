@@ -111,7 +111,7 @@ export default function QuickFactsCard({
           }
       } else {
           // Fetch time if not provided
-           axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&timezone=auto&current=time`)
+           axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&timezone=auto&current=is_day`)
              .then((res) => {
                  if (mounted && res.data?.current?.time) {
                      const date = new Date(res.data.current.time);
