@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import WeatherCard from './WeatherCard';
 import TimeCard from './TimeCard';
@@ -55,10 +55,10 @@ function SingleCityColumn({ place, otherPlace }: { place: Place, otherPlace: Pla
     identity: null,
     telecom: null,
     currency: null,
-    airports: [],
     climate: null,
     cost: null
   });
+  const [nodes, setNodes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -91,12 +91,7 @@ function SingleCityColumn({ place, otherPlace }: { place: Place, otherPlace: Pla
            newData.currency = { currencies: res.currencies };
         }
         if (results[2].status === 'fulfilled') {
-           const nodes = results[2].value.data.elements;
-           const processed = nodes.map((node: any) => ({
-             name: node.tags.name, iata: node.tags.iata,
-             distance: calculateDistance(place.latitude, place.longitude, node.lat, node.lon)
-           })).sort((a: any, b: any) => a.distance - b.distance).slice(0, 3);
-           newData.airports = processed;
+           setNodes(results[2].value.data.elements);
         }
         if (results[3].status === 'fulfilled' && results[3].value) {
             newData.cost = results[3].value;
@@ -108,6 +103,13 @@ function SingleCityColumn({ place, otherPlace }: { place: Place, otherPlace: Pla
     fetchData();
     return () => { mounted = false; };
   }, [place]);
+
+  const airports = useMemo(() => {
+    return nodes.map((node: any) => ({
+      name: node.tags.name, iata: node.tags.iata,
+      distance: calculateDistance(place.latitude, place.longitude, node.lat, node.lon)
+    })).sort((a: any, b: any) => a.distance - b.distance).slice(0, 3);
+  }, [nodes, place.latitude, place.longitude]);
 
   const distanceToOther = calculateDistance(place.latitude, place.longitude, otherPlace.latitude, otherPlace.longitude);
 
@@ -121,7 +123,7 @@ function SingleCityColumn({ place, otherPlace }: { place: Place, otherPlace: Pla
        <CurrencyCard data={data.currency} loading={loading} />
        <GovernmentCard countryCode={data.identity?.cca2} carSide={data.identity?.carSide} loading={loading} />
        <TravelCard
-          airports={data.airports}
+          airports={airports}
           cityName={place.name}
           countryName={place.country}
           comparisonMode
