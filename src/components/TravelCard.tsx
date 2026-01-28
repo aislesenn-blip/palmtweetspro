@@ -22,13 +22,14 @@ interface TravelMetrics {
 interface TravelCardProps {
   airports: Airport[];
   metrics?: TravelMetrics | null;
+  distanceToOther?: number; // Legacy/Comparison support
   comparisonMode?: boolean;
   cityName: string;
   countryName: string;
   loading?: boolean;
 }
 
-export default function TravelCard({ airports, metrics, comparisonMode, cityName, countryName, loading }: TravelCardProps) {
+export default function TravelCard({ airports, metrics, distanceToOther, comparisonMode, cityName, countryName, loading }: TravelCardProps) {
   if (loading) {
     return <SkeletonLoader className="h-64 w-full" />;
   }
@@ -42,17 +43,17 @@ export default function TravelCard({ airports, metrics, comparisonMode, cityName
 
       <div className="space-y-6">
         {/* Comparison Logic */}
-        {comparisonMode && metrics && (
+        {(comparisonMode && (metrics || distanceToOther)) && (
            <div className="bg-sky-50 p-4 rounded-xl mb-4">
               <p className="text-xs font-semibold text-sky-600 uppercase tracking-wider mb-2">Estimates</p>
 
               <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                       <span className="text-xs text-gray-500 block">Air Distance</span>
-                      <span className="font-bold text-gray-900">{metrics.airDistance ? Math.round(metrics.airDistance) : '-'} km</span>
-                      <span className="text-xs text-sky-500 block mt-1">Flight: ~{metrics.flightTime}</span>
+                      <span className="font-bold text-gray-900">{metrics?.airDistance ? Math.round(metrics.airDistance) : (distanceToOther ? Math.round(distanceToOther) : '-')} km</span>
+                      <span className="text-xs text-sky-500 block mt-1">Flight: ~{metrics?.flightTime || (distanceToOther ? (distanceToOther/850).toFixed(1)+'h' : '-')}</span>
                   </div>
-                  {metrics.driveDistance && (
+                  {metrics?.driveDistance && (
                       <div>
                           <span className="text-xs text-gray-500 block">Road Distance</span>
                           <span className="font-bold text-gray-900">{Math.round(metrics.driveDistance)} km</span>
@@ -63,15 +64,15 @@ export default function TravelCard({ airports, metrics, comparisonMode, cityName
               <div className="flex justify-between items-center border-t border-sky-100 pt-3">
                  <div className="text-center">
                     <Car className="h-4 w-4 text-gray-400 mx-auto mb-1" />
-                    <span className="text-xs font-bold text-gray-800">{metrics.driveTime || 'N/A'}</span>
+                    <span className="text-xs font-bold text-gray-800">{metrics?.driveTime || 'N/A'}</span>
                  </div>
                  <div className="text-center">
                     <Bike className="h-4 w-4 text-gray-400 mx-auto mb-1" />
-                    <span className="text-xs font-bold text-gray-800">{metrics.cycleTime || 'N/A'}</span>
+                    <span className="text-xs font-bold text-gray-800">{metrics?.cycleTime || 'N/A'}</span>
                  </div>
                  <div className="text-center">
                     <PersonStanding className="h-4 w-4 text-gray-400 mx-auto mb-1" />
-                    <span className="text-xs font-bold text-gray-800">{metrics.walkTime || 'N/A'}</span>
+                    <span className="text-xs font-bold text-gray-800">{metrics?.walkTime || 'N/A'}</span>
                  </div>
               </div>
            </div>

@@ -13,10 +13,11 @@ interface GovernmentCardProps {
       minAge: number;
       license: string;
   };
+  carSide?: string | null;
   loading?: boolean;
 }
 
-export default function GovernmentCard({ countryCode, visa, driving, loading }: GovernmentCardProps) {
+export default function GovernmentCard({ countryCode, visa, driving, carSide, loading }: GovernmentCardProps) {
   if (loading) {
     return <SkeletonLoader className="h-64 w-full" />;
   }
@@ -53,7 +54,7 @@ export default function GovernmentCard({ countryCode, visa, driving, loading }: 
            <div className="space-y-2">
                <div className="flex justify-between text-sm">
                    <span className="text-gray-500">Side</span>
-                   <span className="font-bold text-gray-900 capitalize">{driving?.side || 'Right'}</span>
+                   <span className="font-bold text-gray-900 capitalize">{carSide || driving?.side || 'Right'}</span>
                </div>
                <div className="flex justify-between text-sm">
                    <span className="text-gray-500">Min. Age</span>

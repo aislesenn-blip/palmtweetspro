@@ -7,11 +7,13 @@ import SkeletonLoader from './SkeletonLoader';
 interface ClimateCardProps {
   cityName?: string;
   forecast?: { time: string[]; temperature_2m_max: number[]; temperature_2m_min: number[] } | null;
+  daily?: any; // Legacy/Comparison support
   normals?: { avgTemp: string; monthlyPrecip: string } | null;
   loading?: boolean;
 }
 
-export default function ClimateCard({ cityName, forecast, normals, loading }: ClimateCardProps) {
+export default function ClimateCard({ cityName, forecast, daily, normals, loading }: ClimateCardProps) {
+  const effectiveForecast = forecast || daily;
   if (loading) {
     return <SkeletonLoader className="h-64 w-full" />;
   }
@@ -53,14 +55,14 @@ export default function ClimateCard({ cityName, forecast, normals, loading }: Cl
          {/* Forecast */}
          <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">14-Day Forecast</p>
-            {forecast ? (
+            {effectiveForecast ? (
                 <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                {forecast.time.map((t, i) => (
+                {effectiveForecast.time.map((t: string, i: number) => (
                     <div key={t} className="flex justify-between items-center text-sm border-b border-gray-50 pb-2">
                         <span className="text-gray-500 w-24">{new Date(t).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}</span>
                         <div className="flex gap-4">
-                        <span className="font-bold text-gray-900">{Math.round(forecast.temperature_2m_max[i])}°</span>
-                        <span className="text-gray-400">{Math.round(forecast.temperature_2m_min[i])}°</span>
+                        <span className="font-bold text-gray-900">{Math.round(effectiveForecast.temperature_2m_max[i])}°</span>
+                        <span className="text-gray-400">{Math.round(effectiveForecast.temperature_2m_min[i])}°</span>
                         </div>
                     </div>
                 ))}

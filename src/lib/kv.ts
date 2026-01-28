@@ -1,16 +1,9 @@
-import { createClient } from '@vercel/kv';
 import axios from 'axios';
 
-// In-memory fallback for development or when KV is not configured
+// In-memory fallback (simulating cache for the session)
+// Since we removed @vercel/kv per request, this currently only caches in-memory.
+// For production, this should be replaced with Next.js 'fetch' with { next: { revalidate } }
 const memoryCache = new Map<string, { data: any; timestamp: number }>();
-
-// Initialize KV client if env vars exist
-const kv = (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
-  ? createClient({
-      url: process.env.KV_REST_API_URL,
-      token: process.env.KV_REST_API_TOKEN,
-    })
-  : null;
 
 interface CacheOptions {
   ttlSeconds: number; // Time for which the data is considered fresh
@@ -24,15 +17,11 @@ export async function fetchWithCache<T>(
   const now = Date.now();
   const { ttlSeconds } = options;
 
-  // 1. Try Cache
+  // 1. Try Memory Cache
   let cached: { data: T; timestamp: number } | null = null;
 
   try {
-    if (kv) {
-      cached = await kv.get(key);
-    } else {
       cached = memoryCache.get(key) as { data: T; timestamp: number } || null;
-    }
   } catch (e) {
     console.warn(`Cache read error for ${key}:`, e);
   }
@@ -53,11 +42,7 @@ export async function fetchWithCache<T>(
     // Update Cache
     const entry = { data, timestamp: now };
     try {
-      if (kv) {
-        await kv.set(key, entry);
-      } else {
         memoryCache.set(key, entry);
-      }
     } catch (e) {
       console.warn(`Cache write error for ${key}:`, e);
     }
