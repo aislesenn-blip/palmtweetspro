@@ -12,104 +12,133 @@ interface QuickFactsCardProps {
   initialWeatherTime?: string;
   initialCurrency?: any;
   initialIdd?: any;
+  loading?: boolean;
 }
 
-export default function QuickFactsCard({ name, country, lat, lng, initialWeatherTime, initialCurrency, initialIdd }: QuickFactsCardProps) {
-  const [summary, setSummary] = useState<string>('');
-  const [wikiExtract, setWikiExtract] = useState<string | null>(null);
-  const [wikiUrl, setWikiUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function QuickFactsCard({
+  name,
+  country,
+  lat,
+  lng,
+  initialWeatherTime,
+  initialCurrency,
+  initialIdd,
+  loading: parentLoading = false
+}: QuickFactsCardProps) {
 
+  const [wikiData, setWikiData] = useState<{ extract: string; url?: string } | null | undefined>(undefined);
+  const [countryDetails, setCountryDetails] = useState<{ currency: string; dialCode: string } | undefined>(undefined);
+  const [timeString, setTimeString] = useState<string | undefined>(undefined);
+
+  // 1. Fetch Wikipedia Data
   useEffect(() => {
     let mounted = true;
 
-    async function generateSummary() {
-      try {
-        setLoading(true);
+    // Reset wiki data when name changes
+    setWikiData(undefined);
 
+    axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${name}`)
+      .then((res) => {
+        if (mounted && res.data) {
+          setWikiData({
+            extract: res.data.extract,
+            url: res.data.content_urls?.desktop?.page
+          });
+        }
+      })
+      .catch((e) => {
+        // Ignore wiki errors, set as null (loaded but empty)
+        if (mounted) setWikiData(null);
+      });
+
+    return () => { mounted = false; };
+  }, [name]);
+
+  // 2. Determine Country Data (Currency & IDD)
+  useEffect(() => {
+    let mounted = true;
+
+    // Helper to format data
+    const formatData = (currencyObj: any, iddObj: any) => {
         let currencyName = "Unknown Currency";
         let dialCode = "Unknown Code";
-        let time = initialWeatherTime || "Unknown Time";
 
-        // Parallel Fetch: Wiki & Missing Data
-        const promises: Promise<any>[] = [];
-
-        // 1. Wiki Fetch
-        promises.push(
-            axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${name}`)
-                 .catch(() => null) // Ignore wiki errors
-        );
-
-        // 2. Fetch Country Info if needed
-        if (!initialCurrency || !initialIdd) {
-             promises.push(axios.get(`https://restcountries.com/v3.1/name/${country}?fields=currencies,idd`));
-        } else {
-             promises.push(Promise.resolve(null));
-        }
-
-        // 3. Fetch Time if needed
-        if (!initialWeatherTime) {
-            promises.push(axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&timezone=auto&current=time`));
-        } else {
-            promises.push(Promise.resolve(null));
-        }
-
-        const [wikiRes, countryRes, timeRes] = await Promise.all(promises);
-
-        if (mounted) {
-            // Process Wiki
-            if (wikiRes && wikiRes.data) {
-                setWikiExtract(wikiRes.data.extract);
-                setWikiUrl(wikiRes.data.content_urls?.desktop?.page);
+        if (currencyObj) {
+            const cCode = Object.keys(currencyObj)[0];
+            if (currencyObj[cCode]) {
+                currencyName = `${currencyObj[cCode].name} (${cCode})`;
             }
-
-            // Process Country
-            if (countryRes && countryRes.data && countryRes.data.length > 0) {
-                 const cData = countryRes.data[0];
-                 if (cData.currencies) {
-                     const cCode = Object.keys(cData.currencies)[0];
-                     currencyName = `${cData.currencies[cCode].name} (${cCode})`;
-                 }
-                 if (cData.idd) {
-                     dialCode = `${cData.idd.root}${cData.idd.suffixes?.[0] || ''}`;
-                 }
-            } else if (initialCurrency && initialIdd) {
-                 const cCode = Object.keys(initialCurrency)[0];
-                 currencyName = `${initialCurrency[cCode].name} (${cCode})`;
-                 dialCode = `${initialIdd.root}${initialIdd.suffixes?.[0] || ''}`;
-            }
-
-            // Process Time
-            if (timeRes && timeRes.data?.current?.time) {
-                 const date = new Date(timeRes.data.current.time);
-                 time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            } else if (initialWeatherTime) {
-                 const date = new Date(initialWeatherTime);
-                 if (!isNaN(date.getTime())) {
-                      time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                 } else {
-                      time = initialWeatherTime;
-                 }
-            }
-
-            setSummary(`${name} is a key location in ${country}. The local dial code is ${dialCode}, and the currency used is ${currencyName}. Current time: ${time}.`);
         }
+        if (iddObj) {
+            dialCode = `${iddObj.root}${iddObj.suffixes?.[0] || ''}`;
+        }
+        return { currency: currencyName, dialCode };
+    };
 
-      } catch (e) {
-          console.error("QuickFacts Error", e);
-          if (mounted) setSummary(`Explore data for ${name}, ${country}.`);
-      } finally {
-          if (mounted) setLoading(false);
-      }
+    if (initialCurrency && initialIdd) {
+        setCountryDetails(formatData(initialCurrency, initialIdd));
+    } else if (!parentLoading) {
+        // Only fetch if data is missing AND parent is NOT loading
+        // If parent is loading, we wait (stay undefined)
+
+        axios.get(`https://restcountries.com/v3.1/name/${country}?fields=currencies,idd`)
+            .then((res) => {
+                if (mounted && res.data && res.data.length > 0) {
+                    const cData = res.data[0];
+                    setCountryDetails(formatData(cData.currencies, cData.idd));
+                } else {
+                    if (mounted) setCountryDetails({ currency: "Unknown Currency", dialCode: "Unknown Code" });
+                }
+            })
+            .catch(() => {
+                 if (mounted) setCountryDetails({ currency: "Unknown Currency", dialCode: "Unknown Code" });
+            });
     }
 
-    generateSummary();
     return () => { mounted = false; };
-  }, [name, country, lat, lng, initialWeatherTime, initialCurrency, initialIdd]);
+  }, [country, initialCurrency, initialIdd, parentLoading]);
 
-  if (loading) {
+  // 3. Determine Time
+  useEffect(() => {
+      let mounted = true;
+
+      if (initialWeatherTime) {
+          const date = new Date(initialWeatherTime);
+          if (!isNaN(date.getTime())) {
+              setTimeString(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          } else {
+              setTimeString(initialWeatherTime);
+          }
+      } else {
+          // Fetch time if not provided
+           axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&timezone=auto&current=time`)
+             .then((res) => {
+                 if (mounted && res.data?.current?.time) {
+                     const date = new Date(res.data.current.time);
+                     setTimeString(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+                 } else {
+                     if (mounted) setTimeString("Unknown Time");
+                 }
+             })
+             .catch(() => {
+                 if (mounted) setTimeString("Unknown Time");
+             });
+      }
+
+      return () => { mounted = false; };
+  }, [lat, lng, initialWeatherTime]);
+
+
+  // Derived Loading State
+  // We are loading if any critical data is undefined
+  const isLoading = wikiData === undefined || countryDetails === undefined || timeString === undefined;
+
+  if (isLoading) {
       return <SkeletonLoader className="h-48 w-full mb-8" />;
   }
+
+  // Construct Summary
+  const summary = `${name} is a key location in ${country}. The local dial code is ${countryDetails?.dialCode}, and the currency used is ${countryDetails?.currency}. Current time: ${timeString}.`;
 
   return (
     <div className="mb-8 rounded-3xl bg-blue-50 p-6 shadow-sm border border-blue-100">
@@ -118,11 +147,11 @@ export default function QuickFactsCard({ name, country, lat, lng, initialWeather
          {summary}
        </p>
 
-       {wikiExtract && (
+       {wikiData?.extract && (
          <div className="mt-4 pt-4 border-t border-blue-200 text-sm text-blue-800">
-            <p className="line-clamp-2">{wikiExtract}</p>
-            {wikiUrl && (
-                <a href={wikiUrl} target="_blank" rel="noopener noreferrer" className="block mt-2 font-semibold hover:underline">
+            <p className="line-clamp-2">{wikiData.extract}</p>
+            {wikiData.url && (
+                <a href={wikiData.url} target="_blank" rel="noopener noreferrer" className="block mt-2 font-semibold hover:underline">
                     Source: Wikipedia
                 </a>
             )}

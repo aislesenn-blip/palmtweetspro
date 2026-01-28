@@ -1,20 +1,24 @@
 
-> palmtweets@0.1.0 start
-> next start
+> palmtweets@0.1.0 dev
+> next dev
 
- ⨯ Failed to start server
-Error: listen EADDRINUSE: address already in use :::3000
-    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
-    at listenInCluster (node:net:1997:12)
-    at Server.listen (node:net:2102:7)
-    at /app/node_modules/next/dist/server/lib/start-server.js:280:16
-    at new Promise (<anonymous>)
-    at startServer (/app/node_modules/next/dist/server/lib/start-server.js:191:11)
-    at Module.nextStart (/app/node_modules/next/dist/cli/next-start.js:25:40)
-    at /app/node_modules/next/dist/bin/next:105:856 {
-  code: 'EADDRINUSE',
-  errno: -98,
-  syscall: 'listen',
-  address: '::',
-  port: 3000
-}
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 1781ms
+ ○ Compiling /[lang]/[...slug] ...
+ ✓ Compiled /[lang]/[...slug] in 9s (997 modules)
+ ✓ Compiled in 613ms (403 modules)
+Warning: Only plain objects can be passed to Client Components from Server Components. Classes or other objects with methods are not supported.
+  <... initialPlace={{id: 6, slug: "paris", name: "Paris", country: ..., latitude: ..., longitude: ..., description: ...}} dict=...>
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ GET /en/paris 200 in 10838ms
+ ○ Compiling /api/places/nearby ...
+ ✓ Compiled /api/places/nearby in 5s (615 modules)
+ GET /api/places/nearby?lat=48.85341&lng=2.3488 200 in 5184ms
+ GET /api/places/nearby?lat=48.85341&lng=2.3488 200 in 17ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 675ms (1008 modules)
+ GET / 404 in 842ms
+ GET / 404 in 57ms
