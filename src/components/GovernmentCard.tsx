@@ -36,7 +36,17 @@ export default function GovernmentCard({ countryCode, visa, driving, carSide, lo
 
   const emergency = getEmergencyNumbers(countryCode);
   const isVisaObject = typeof visa === 'object' && visa !== null;
-  const mainVisaText = isVisaObject ? (visa as VisaDetails).tourist : visa;
+
+  // Safe extraction of main text
+  let mainVisaText = "Check Embassy";
+  if (isVisaObject) {
+      const v = visa as any; // Cast to allow safe access
+      if (v.tourist && typeof v.tourist === 'string') {
+          mainVisaText = v.tourist;
+      }
+  } else if (typeof visa === 'string') {
+      mainVisaText = visa;
+  }
 
   const tabs = [
       { id: 'tourist', label: 'Tourist', icon: Stamp },
@@ -49,8 +59,8 @@ export default function GovernmentCard({ countryCode, visa, driving, carSide, lo
 
   const getModalContent = () => {
       if (!isVisaObject) return "Information unavailable.";
-      const detail = (visa as VisaDetails)[activeTab];
-      return detail || "Specific requirements unavailable. Please check with the embassy.";
+      const detail = (visa as any)[activeTab];
+      return (typeof detail === 'string' && detail) ? detail : "Specific requirements unavailable. Please check with the embassy.";
   };
 
   return (
@@ -68,7 +78,7 @@ export default function GovernmentCard({ countryCode, visa, driving, carSide, lo
                <FileCheck className="h-4 w-4 text-red-600" />
                <p className="text-xs font-semibold text-red-600 uppercase tracking-wider">Visa Policy</p>
            </div>
-           <p className="text-sm font-bold text-gray-900 line-clamp-2">{mainVisaText || 'Check Embassy'}</p>
+           <p className="text-sm font-bold text-gray-900 line-clamp-2">{mainVisaText}</p>
 
            {isVisaObject && (
                <button
